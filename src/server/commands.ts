@@ -889,6 +889,8 @@ export class Commands {
             via === undefined ? written : `[via ${via}] ${written}`,
         );
         const about = this.#aboutSession(id, user, request.about);
+        // Channel mentions: #name tokens that name a channel of this server say which session each is, for Pi alone.
+        const channelContext = await this.#mentionedChannels(typed);
         const mentioned =
             request.inlineFiles === true
                 ? await this.#mentionedFiles(id, user, typed, model.input.includes("image"))
@@ -900,6 +902,9 @@ export class Commands {
                 part.type === "text" ? { ...part, text: app.hidden.replace(part.text, id) } : part,
             ),
             ...(about === undefined ? [] : [{ type: "text" as const, text: about }]),
+            ...(channelContext === undefined
+                ? []
+                : [{ type: "text" as const, text: channelContext }]),
         ];
 
         made.forEach((result, index) => {
@@ -1230,6 +1235,53 @@ export class Commands {
      * given on its command line, and images as images when the model takes them. Only files this person may load
      * through the session; anything else stays a mention, which Pi can read itself.
      */
+    /**
+     * What a message's `#name` tokens that name a channel of this server say to Pi alone: which session each is,
+     * so session_read can look there when the message needs it. The words the person typed stay as they are.
+     */
+    async #mentionedChannels(text: string): Promise<string | undefined> {
+        const tokens = [
+            ...new Set(
+                // A # before a word character would be part of a longer token (C#, a color): anything else, Chinese
+                // included, opens the mention — speech has no spaces to rely on.
+                [...text.matchAll(/(?:^|[^\w#])#([^\s#]{1,60})/gu)].map((each) =>
+                    each[1]!.toLowerCase(),
+                ),
+            ),
+        ];
+
+        if (tokens.length === 0) {
+            return undefined;
+        }
+
+        const channels = this.#app
+            .sessions()
+            .filter(
+                (session) =>
+                    session.channel === true &&
+                    tokens.includes((session.title ?? "").toLowerCase()),
+            );
+
+        if (channels.length === 0) {
+            return undefined;
+        }
+
+        const lines = channels.map((session) => {
+            const title = (session.title ?? "").replace(/[\n>"]/g, " ");
+            const folder = session.cwd.replace(/[\n>"]/g, " ");
+
+            return `#${title} is channel session ${session.id}, in ${folder}.`;
+        });
+
+        return [
+            `${CONTEXT_BLOCK} channels>`,
+            "The # words in this message name channels below: sessions of their own, each with its own history.",
+            ...lines,
+            "Read one with session_read when what was said there bears on the question.",
+            "</pocket-context>",
+        ].join("\n");
+    }
+
     async #mentionedFiles(
         id: ConversationId,
         user: User,

@@ -852,6 +852,22 @@ function WatchBar() {
     </div>`;
 }
 
+/** The `#channel` being typed at the caret: where it starts and ends, and the query. Like a file mention's. */
+function channelAt(text, caret) {
+    // A # before a word character stays where it is (C#, a color's hex): anything else — Chinese too, whose speech
+    // has no spaces — opens the mention.
+    const match = /(?:^|[^\w#])#([^\s#]*)$/.exec(text.slice(0, caret));
+
+    if (!match) {
+        return null;
+    }
+
+    const query = match[1];
+    const rest = /^\S*/.exec(text.slice(caret))[0];
+
+    return { start: caret - query.length - 1, end: caret + rest.length, query };
+}
+
 export function Composer() {
     const { view, conversationId } = store.state;
     const historyScope = { person: store.state.me?.id, conversation: conversationId };
@@ -869,6 +885,8 @@ export function Composer() {
     // File mentions: where the caret is, and the mention Escape hid (by where it starts).
     const [caret, setCaret] = useState(() => drafts.get(conversationId).length);
     const [hiddenMention, setHiddenMention] = useState(null);
+    // The #channel mention Escape hid (by where it starts), the same as a file mention's.
+    const [hiddenChannel, setHiddenChannel] = useState(null);
     const [pastes, setPastes] = useState(() => loadPastes(conversationId));
     // The quotes Reply put in the box (`loadPieces`), and the one a first Backspace under it marked, by its start.
     const [pieces, setPieces] = useState(() => loadPieces(conversationId));
@@ -1236,6 +1254,20 @@ export function Composer() {
     const found = mention ? suggestFiles(mention.query) : null;
     const matches = found?.items ?? [];
     const chosenFile = matches[Math.min(pick, matches.length - 1)];
+    // The #channel being typed at the caret: the channels of this server, named like Discord's. The one Escape hid
+    // stays hidden while it starts where it did; an @ mention and a # mention cannot both be at one caret.
+    const channelTyped =
+        !searching && !shell && !inQuote && mention === null ? channelAt(text, caret) : null;
+    const channelLive = channelTyped !== null && channelTyped.start !== hiddenChannel;
+    const channelChoices = channelLive
+        ? store.state.sessions
+              .filter((each) => each.channel === true)
+              .filter((each) =>
+                  (each.title ?? "").toLowerCase().includes(channelTyped.query.toLowerCase()),
+              )
+              .slice(0, 8)
+        : [];
+    const chosenChannel = channelChoices[Math.min(pick, channelChoices.length - 1)];
 
     // A new mention checks the folder's list again, in the background; a hidden one shows again once it is gone.
     useEffect(() => {
@@ -1248,6 +1280,11 @@ export function Composer() {
             setHiddenMention(null);
         }
     }, [typed === null]);
+    useEffect(() => {
+        if (channelTyped === null && hiddenChannel !== null) {
+            setHiddenChannel(null);
+        }
+    }, [channelTyped === null]);
     // Arrowing through a long list keeps the highlighted one in view.
     useEffect(
         () => list.current?.querySelector(".command.on")?.scrollIntoView({ block: "nearest" }),
@@ -1299,6 +1336,26 @@ export function Composer() {
         const at = mention.start + written.length + (item.dir ? 0 : 1);
 
         edit(`${text.slice(0, mention.start)}${written}${space}${rest}`, at);
+        requestAnimationFrame(() => {
+            const element = box.current;
+
+            if (!element) {
+                return;
+            }
+
+            element.focus();
+            element.setSelectionRange(at, at);
+        });
+    };
+
+    /** A picked channel goes into the box in place of what was typed, with a space after it. */
+    const chooseChannel = (item) => {
+        const written = `#${item.title ?? ""}`;
+        const rest = text.slice(channelTyped.end);
+        const space = /^\s/.test(rest) ? "" : " ";
+        const at = channelTyped.start + written.length + 1;
+
+        edit(`${text.slice(0, channelTyped.start)}${written}${space}${rest}`, at);
         requestAnimationFrame(() => {
             const element = box.current;
 
@@ -1688,6 +1745,34 @@ export function Composer() {
 
                 setSearching(false);
                 recall(chosenRecall);
+
+                return;
+            }
+        }
+
+        if (channelChoices.length > 0 && !event.isComposing) {
+            const move = { ArrowDown: 1, ArrowUp: -1 }[event.key];
+
+            if (move !== undefined) {
+                event.preventDefault();
+                setPick(
+                    (Math.min(pick, channelChoices.length - 1) + move + channelChoices.length) %
+                        channelChoices.length,
+                );
+
+                return;
+            }
+
+            if (event.key === "Escape") {
+                event.preventDefault();
+                setHiddenChannel(channelTyped.start);
+
+                return;
+            }
+
+            if (event.key === "Tab" || (event.key === "Enter" && !event.shiftKey && !coarse)) {
+                event.preventDefault();
+                chooseChannel(chosenChannel);
 
                 return;
             }
@@ -2240,6 +2325,30 @@ export function Composer() {
                         >
                             ${inlineFiles ? "Let Pi read them" : "Send them along"}
                         </button>
+                    </div>`
+                }
+                ${
+                    channelLive &&
+                    channelChoices.length > 0 &&
+                    html`<div
+                        class="commands file-options"
+                        role="listbox"
+                        aria-label=${t("Channels")}
+                        ref=${list}
+                    >
+                        ${channelChoices.map(
+                            (item) => html`<button
+                                key=${item.id}
+                                class=${`command file-option ${item === chosenChannel ? "on" : ""}`}
+                                role="option"
+                                aria-selected=${item === chosenChannel}
+                                onMouseDown=${(event) => event.preventDefault()}
+                                onClick=${() => chooseChannel(item)}
+                            >
+                                <${Icon} name="chat" size=${14} class="file-icon" />
+                                <span class="file-name">#${item.title}</span>
+                            </button>`,
+                        )}
                     </div>`
                 }
                 ${
