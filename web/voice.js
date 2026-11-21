@@ -510,19 +510,59 @@ export function useVoiceMessage(onRecording) {
     if (self.current === null) {
         self.current = {
             recorder: null,
+            mime: "",
+            chunks: [],
             /** End the recording: `send` hands it on, anything else drops it. */
             stop(send) {
                 const recorder = this.recorder;
 
-                if (!recorder) {
+                if (!recorder || recorder.state === "inactive") {
                     return;
                 }
 
-                if (!send) {
-                    this.recorder = null;
+                this.recorder = null;
+
+                const chunks = this.chunks;
+                const mime = this.mime;
+                // What the recording ends as: heard once only — some browsers, iOS among them, never fire the stop.
+                let over = false;
+
+                const once = () => {
+                    if (over) {
+                        return;
+                    }
+
+                    over = true;
+
+                    for (const track of recorder.stream?.getTracks?.() ?? []) {
+                        track.stop();
+                    }
+
+                    setState("idle");
+
+                    if (send && chunks.some((chunk) => chunk.size > 0)) {
+                        hear.current(new Blob(chunks, { type: mime.split(";")[0] }));
+                    } else if (send) {
+                        notify("info", "The recording came out empty. Tap the mic and try again.");
+                    }
+                };
+
+                recorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        chunks.push(event.data);
+                    }
+                };
+
+                recorder.onstop = once;
+
+                try {
+                    recorder.stop();
+                } catch {
+                    once();
                 }
 
-                recorder.stop();
+                // If the stop never lands, the recording still goes.
+                setTimeout(once, 2000);
             },
             start() {
                 const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((each) =>
@@ -539,30 +579,19 @@ export function useVoiceMessage(onRecording) {
                     .getUserMedia({ audio: true })
                     .then((stream) => {
                         const recorder = new MediaRecorder(stream, { mimeType: mime });
-                        const chunks = [];
+
+                        // A slice a second: the audio is ours even if the stop never fires (iOS).
+                        this.mime = mime;
+                        this.chunks = [];
 
                         recorder.ondataavailable = (event) => {
                             if (event.data.size > 0) {
-                                chunks.push(event.data);
+                                this.chunks.push(event.data);
                             }
-                        };
-
-                        recorder.onstop = () => {
-                            stream.getTracks().forEach((track) => track.stop());
-
-                            // A cancel left this recorder behind: the recording goes no further.
-                            if (this.recorder !== recorder) {
-                                return;
-                            }
-
-                            this.recorder = null;
-                            setState("idle");
-
-                            hear.current(new Blob(chunks, { type: mime.split(";")[0] }));
                         };
 
                         this.recorder = recorder;
-                        recorder.start();
+                        recorder.start(1000);
                         setBegan(Date.now());
                         setState("recording");
                     })
