@@ -2765,13 +2765,15 @@ const answered = (key) => (answer) => {
 
 export const actions = {
     /** `inlineFiles`: the files the message mentions with @ go along with it. */
-    submit: (text, attachments, mode, inlineFiles = false, requestId = uid()) =>
+    /** `inlineFiles`: the files the message mentions with @ go along with it. `audioLanguage`: hear attached audio as. */
+    submit: (text, attachments, mode, inlineFiles = false, requestId = uid(), audioLanguage) =>
         api(`c/${current()}/submit`, {
             text,
             attachments,
             mode,
             requestId,
             ...(inlineFiles ? { inlineFiles } : {}),
+            ...(audioLanguage ? { audioLanguage } : {}),
         }).then(answered("submissionId")),
     /** Run a command in the session's folder (`!`); `context: false` keeps it from Pi (`!!`). */
     shell: (command, context, requestId = uid()) =>

@@ -3,6 +3,7 @@
 // to Google's servers to be recognised; Safari on iOS has it too; Firefox has none, and there the mic does not show.
 import { useEffect, useRef, useState } from "preact/hooks";
 import { notify, store } from "./store.js";
+import { prefs, setPrefs } from "./theme.js";
 import { html, Icon, Spinner } from "./ui.js";
 
 /** The browser's recognizer, looked up when used (so a page can stand one in), or undefined where there is none. */
@@ -389,7 +390,8 @@ export function useDictation(box, onText, { top = false, place = null, onError =
                 const element = this.box.current;
 
                 try {
-                    const out = await fetch("/api/stt", {
+                    const lang = voiceLanguage();
+                    const out = await fetch(lang === "" ? "/api/stt" : `/api/stt?lang=${lang}`, {
                         method: "POST",
                         headers: { "content-type": blob.type || "audio/webm", "x-pocket": "1" },
                         body: blob,
@@ -628,8 +630,40 @@ export function useVoiceMessage(onRecording) {
     };
 }
 
+/** What the mic's language chip reads now, with what hearing goes as. */
+const voiceLangNow = () => {
+    const said = voiceLanguage() || "auto";
+
+    return VOICE_LANGS.find(([code]) => code === said) ?? VOICE_LANGS[0];
+};
+
+/** The next language for voice messages, and it stays for the recordings to come. */
+const cycleVoiceLanguage = () => {
+    const at = VOICE_LANGS.findIndex(([code]) => code === (voiceLanguage() || "auto"));
+    const next = VOICE_LANGS[(at + 1) % VOICE_LANGS.length] ?? VOICE_LANGS[0];
+
+    setPrefs({ voiceLang: next[0] });
+
+    return next;
+};
+
 /** A recording's clock reads seconds as m:ss. */
 const voiceClock = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+
+/** The languages a voice message can be heard as: the code the server takes, its name, and what the chip reads. */
+const VOICE_LANGS = [
+    ["auto", "the transcription's own guess", "AUTO"],
+    ["zh", "Chinese", "中"],
+    ["en", "English", "EN"],
+    ["de", "German", "DE"],
+];
+
+/** The person's language for voice messages, as the server takes it: none for its own guess. */
+export const voiceLanguage = () => {
+    const said = String(prefs().voiceLang ?? "auto").trim().toLowerCase();
+
+    return /^[a-z]{2,3}$/.test(said) ? said : "";
+};
 
 /**
  * The voice message's mic: starts a recording, and while it records, ends it and sends it. While it records, the
@@ -639,6 +673,7 @@ export function VoiceButton({ voice, class: className = "", size = 17, part, dis
     const { state, began } = voice;
     const recording = state === "recording";
     const sending = state === "sending";
+    const lang = voiceLangNow();
     const [, tick] = useState(0);
 
     useEffect(() => {
@@ -652,6 +687,17 @@ export function VoiceButton({ voice, class: className = "", size = 17, part, dis
     }, [recording]);
 
     return html`<span class="voice-live">
+        <button
+            type="button"
+            class="voice-lang"
+            aria-label="Voice message language"
+            title=${`Voice message language: ${lang[1]}`}
+            disabled=${sending}
+            onMouseDown=${(event) => event.preventDefault()}
+            onClick=${() => cycleVoiceLanguage()}
+        >
+            ${lang[2]}
+        </button>
         ${
             recording &&
             html`<span class="voice-clock" aria-hidden="true">

@@ -54,7 +54,7 @@ import { TrustBar } from "./trust.js";
 import { prefs } from "./theme.js";
 import { fingerprint } from "./text-hash.js";
 import { says } from "./turns.js";
-import { MicButton, VoiceButton, useDictation, useVoiceMessage, voiceRecording } from "./voice.js";
+import { MicButton, VoiceButton, useDictation, useVoiceMessage, voiceLanguage, voiceRecording } from "./voice.js";
 import {
     APPLE,
     contextLevel,
@@ -1413,7 +1413,7 @@ export function Composer() {
         }
 
         const ok = await attempt(() =>
-            actions.submit("", [attachment], busy ? sendMode : "followUp", false, record.requestId),
+            actions.submit("", [attachment], busy ? sendMode : "followUp", false, record.requestId, voiceLanguage()),
         );
 
         endSend(conversationId, record, Boolean(ok));

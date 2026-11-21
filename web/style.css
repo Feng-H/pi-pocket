@@ -5856,6 +5856,25 @@ pre.diff .del {
     color: var(--muted);
 }
 
+/* The language a voice message goes out as, beside its mic: a small chip that cycles on a tap. */
+.voice-lang {
+    margin-right: 4px;
+    padding: 2px 5px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font: 10px/1.4 var(--mono);
+    color: var(--muted);
+    white-space: nowrap;
+    transition: color var(--t-hover) var(--ease-out), border-color var(--t-hover) var(--ease-out);
+}
+
+@media (hover: hover) {
+    .voice-lang:hover {
+        color: var(--text);
+        border-color: var(--muted);
+    }
+}
+
 /*
  * A row out of sight is not styled or laid out (`content-visibility`): with hundreds of sessions, each restyle and each
  * width change (the sidebar's drag, the window's) paid for every row. Meanwhile it keeps the size it last had, or its

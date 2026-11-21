@@ -10,6 +10,16 @@ const MODEL = "whisper-large-v3-turbo";
 export const sttConfigured = (): boolean =>
     process.env.GROQ_API_KEY !== undefined && process.env.GROQ_API_KEY !== "";
 
+/**
+ * The language to hear audio as, from what a person picked ("zh", "de", "en"…): a short code, and none for the
+ * model's own guess ("auto", or anything else), which mistakes short or accented speech for a neighboring tongue.
+ */
+export const sttLanguage = (value: string | null | undefined): string => {
+    const said = (value ?? "").trim().toLowerCase();
+
+    return /^[a-z]{2,3}$/.test(said) ? said : "";
+};
+
 /** The upload's name: Groq reads an audio file's format from its extension, so it follows the type. */
 function speechName(type: string): string {
     if (type.includes("mp4")) {return "speech.m4a";}
@@ -27,7 +37,7 @@ function speechName(type: string): string {
  * The words the server's speech-to-text hears in the audio (raw bytes, as the browser recorded them). Throws an
  * HttpError when the service cannot be reached or refuses the audio; an empty string when it hears nothing.
  */
-export async function transcribeAudio(audio: Buffer, mime: string): Promise<string> {
+export async function transcribeAudio(audio: Buffer, mime: string, language = ""): Promise<string> {
     const key = process.env.GROQ_API_KEY;
 
     if (key === undefined || key === "") {
@@ -40,6 +50,12 @@ export async function transcribeAudio(audio: Buffer, mime: string): Promise<stri
     form.append("file", new Blob([new Uint8Array(audio)], { type }), speechName(type));
     form.append("model", MODEL);
     form.append("response_format", "json");
+
+    const said = sttLanguage(language);
+
+    if (said !== "") {
+        form.append("language", said);
+    }
 
     let out: Response;
 

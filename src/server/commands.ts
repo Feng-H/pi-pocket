@@ -141,6 +141,8 @@ export interface SubmitRequest {
     requestId: string;
     /** Send the files the message mentions with `@` along with it, so Pi need not read them first. */
     inlineFiles?: boolean;
+    /** The language to hear attached audio as ("zh", "de"…), instead of the transcription's own guess. */
+    audioLanguage?: string;
     /**
      * PiP only: the session a passage quoted in the message came from (Ask PiP by a selection). PiP gets which session
      * it is, unseen by people (`CONTEXT_BLOCK`).
@@ -870,7 +872,7 @@ export class Commands {
 
         // Voice messages: what an attached audio says, heard by the server's speech-to-text, becomes the message's
         // words — the model reads them in place of listening, and the person sees what was heard in their own message.
-        const heard = await this.#heardAudio(id, attachments);
+        const heard = await this.#heardAudio(id, attachments, request.audioLanguage);
         const said = heard === "" ? text : text === "" ? heard : `${text}\n${heard}`;
 
         const lines = attachments.map((file) => {
@@ -1013,7 +1015,7 @@ export class Commands {
      * What a message's attached audio says (`🎙 …`, one line each): the server's speech-to-text hears each, most
      * recent last. An audio that cannot be heard leaves no line, and a warning goes to the session's notices.
      */
-    async #heardAudio(id: ConversationId, attachments: Attachment[]): Promise<string> {
+    async #heardAudio(id: ConversationId, attachments: Attachment[], language = ""): Promise<string> {
         const audio = attachments.filter(
             (file) => file.mime?.startsWith("audio/") === true && file.size <= MAX_STT,
         );
@@ -1025,7 +1027,7 @@ export class Commands {
         const lines = await Promise.all(
             audio.slice(0, 4).map(async (file) => {
                 try {
-                    const words = (await transcribeAudio(await readFile(file.path), file.mime)).trim();
+                    const words = (await transcribeAudio(await readFile(file.path), file.mime, language)).trim();
 
                     return words === "" ? undefined : `🎙 ${words}`;
                 } catch (error) {
