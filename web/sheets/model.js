@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { actions, api, attempt, closeSheet, openSheet, store } from "../store.js";
 import { useDragToClose } from "../gestures.js";
 import { favoriteModels } from "../model-favorites.js";
+import { t } from "../i18n.js";
 import {
     anchorStyle,
     BOTTOM_SHEETS,
@@ -254,7 +255,7 @@ export function ModelPicker() {
             ref=${box}
             role="dialog"
             aria-modal="true"
-            aria-label=${forDefault ? "Default model" : "Model"}
+            aria-label=${t(forDefault ? "Default model" : "Model")}
             aria-keyshortcuts=${scopedModels.length > 0 ? "Tab" : undefined}
             tabindex="-1"
             onKeyDown=${onKeyDown}
@@ -262,15 +263,15 @@ export function ModelPicker() {
             <div class="grip" aria-hidden="true"></div>
             <header class="pop-menu-head">
                 <span>
-                    ${forDefault ? "Default model" : "Model"}
+                    ${t(forDefault ? "Default model" : "Model")}
                     ${forDefault && html`<span class="pop-menu-head-sub">for new sessions</span>`}
                     ${
                         scopedModels.length > 0 &&
                         html`<span
                             class="model-scope"
                             role="group"
-                            aria-label="Model scope"
-                            title="Tab switches between scoped and all models"
+                            aria-label={t("Model scope")}
+                            title={t("Tab switches between scoped and all models")}
                         >
                             <span aria-hidden="true">[</span>
                             <button
@@ -288,7 +289,7 @@ export function ModelPicker() {
                             <button
                                 class=${showAll ? "on" : ""}
                                 aria-pressed=${showAll}
-                                title="All models with a configured sign-in"
+                                title={t("All models with a configured sign-in")}
                                 onClick=${() => {
                                     setShowAll(true);
                                     setPicked(0);
@@ -310,7 +311,7 @@ export function ModelPicker() {
                     <${Icon} name="search" size=${15} />
                     <input
                         ref=${search}
-                        placeholder="Search models"
+                        placeholder={t("Search models")}
                         aria-keyshortcuts=${scopedModels.length > 0 ? "Tab" : undefined}
                         value=${query}
                         onInput=${(event) => {
@@ -322,7 +323,7 @@ export function ModelPicker() {
             }
             ${
                 favorites.size > 0 &&
-                html`<div class="segmented model-filters" role="group" aria-label="Filter models">
+                html`<div class="segmented model-filters" role="group" aria-label={t("Filter models")}>
                     <button
                         class=${favoritesOnly ? "" : "on"}
                         aria-pressed=${!favoritesOnly}
@@ -345,7 +346,7 @@ export function ModelPicker() {
                     </button>
                 </div>`
             }
-            <div class="pop-menu-list" ref=${list} role="listbox" aria-label="Models">
+            <div class="pop-menu-list" ref=${list} role="listbox" aria-label={t("Models")}>
                 ${
                     models.length === 0 &&
                     html`<p class="muted pop-menu-note">
@@ -356,7 +357,7 @@ export function ModelPicker() {
                     models.length > 0 &&
                     shown.length === 0 &&
                     html`<p class="muted pop-menu-note">
-                        ${favoritesOnly && query.trim() === "" ? "No favorites in this model scope." : `No model matches “${query.trim()}”.`}
+                        ${favoritesOnly && query.trim() === "" ? t("No favorites in this model scope.") : t("No model matches $", query.trim())}
                     </p>`
                 }
                 ${shown.map(
@@ -433,7 +434,7 @@ export function ModelPicker() {
                                       </span>`
                                     : html`<button
                                           class="pop-menu-link"
-                                          title="New sessions start with this model and thinking level"
+                                          title={t("New sessions start with this model and thinking level")}
                                           onClick=${() => setDefault(agent.model, agent.thinkingLevel ?? "off")}
                                       >
                                           Make default

@@ -17,6 +17,7 @@ import {
     store,
 } from "../store.js";
 import { sessionStarted } from "../extension-ui.js";
+import { t } from "../i18n.js";
 import { APPLE, html, Icon, Sheet, shortPath } from "../ui.js";
 import { piSessionsAvailable } from "./pi-sessions.js";
 
@@ -114,7 +115,7 @@ function LineInput({ value, placeholder, label, onSubmit, onCancel, class: class
         <button class="button small primary" type="submit" disabled=${text.trim() === ""}>
             OK
         </button>
-        <button class="icon-button" type="button" aria-label="Cancel" onClick=${onCancel}>
+        <button class="icon-button" type="button" aria-label={t("Cancel")} onClick=${onCancel}>
             <${Icon} name="close" size=${16} />
         </button>
     </form>`;
@@ -429,14 +430,14 @@ export function CwdSheet({ mode, fromList = false }) {
             ? [
                   {
                       path: server.defaultCwd,
-                      name: "Default workspace",
+                      name: t("Default workspace"),
                       icon: "folder",
                       pin: !changing,
                   },
               ]
             : []),
-        ...(home ? [{ path: home, name: "Home", icon: "home" }] : []),
-        { path: "/", name: "Computer", icon: "monitor" },
+        ...(home ? [{ path: home, name: t("Home"), icon: "home" }] : []),
+        { path: "/", name: t("Computer"), icon: "monitor" },
     ];
 
     const place = (path, name, icon, key = null, pin = false) => html`<button
@@ -455,8 +456,8 @@ export function CwdSheet({ mode, fromList = false }) {
                 role="button"
                 tabindex="-1"
                 class=${`fp-pin ${alwaysDefault ? "on" : ""}`}
-                title=${alwaysDefault ? "Always open new sessions here" : "Open new sessions here by default"}
-                aria-label=${alwaysDefault ? "Always open new sessions here" : "Open new sessions here by default"}
+                title=${t(alwaysDefault ? "Always open new sessions here" : "Open new sessions here by default")}
+                aria-label=${t(alwaysDefault ? "Always open new sessions here" : "Open new sessions here by default")}
                 onClick=${toggleAlwaysDefault}
             >
                 <${Icon} name="pin" size=${13} />
@@ -466,7 +467,7 @@ export function CwdSheet({ mode, fromList = false }) {
     </button>`;
 
     return html`<${Sheet}
-        title=${changing ? "Move this session: pick a folder" : "New session: pick a folder"}
+        title=${t(changing ? "Move this session: pick a folder" : "New session: pick a folder")}
         onClose=${closeSheet}
         wide=${true}
         className="folder-sheet"
@@ -488,7 +489,7 @@ export function CwdSheet({ mode, fromList = false }) {
                           class="fp-path-input"
                           value=${editing}
                           placeholder="A path: ~/code or /srv"
-                          label="Go to a path"
+                          label={t("Go to a path")}
                           onSubmit=${goTo}
                           onCancel=${() => {
                               setEditing(null);
@@ -499,7 +500,7 @@ export function CwdSheet({ mode, fromList = false }) {
                           class="fp-crumbs"
                           ref=${crumbsBox}
                           onScroll=${(event) => markCut(event.currentTarget)}
-                          aria-label="Folder"
+                          aria-label={t("Folder")}
                           title="Click the path's end to type one (Ctrl+L)"
                       >
                           ${crumbs.map((crumb, index) =>
@@ -573,7 +574,7 @@ export function CwdSheet({ mode, fromList = false }) {
                     }
                     <button
                         class="icon-button"
-                        aria-label="Never mind"
+                        aria-label={t("Never mind")}
                         onClick=${() => setMissing(null)}
                     >
                         <${Icon} name="close" size=${15} />
@@ -582,7 +583,7 @@ export function CwdSheet({ mode, fromList = false }) {
             </div>`
         }
         <div class="fp-main">
-            <nav class="fp-places" aria-label="Places">
+            <nav class="fp-places" aria-label={t("Places")}>
                 ${places.map((each) => place(each.path, each.name, each.icon, null, each.pin))}
                 ${favorites.length > 0 && html`<div class="fp-places-title">Favorites</div>`}
                 ${favorites.map((path, index) =>
@@ -622,7 +623,7 @@ export function CwdSheet({ mode, fromList = false }) {
                     html`<${LineInput}
                         class="fp-naming"
                         placeholder="Folder name"
-                        label="The new folder's name"
+                        label={t("The new folder's name")}
                         onSubmit=${(name) => make(joined(folder, name))}
                         onCancel=${() => {
                             setNaming(false);
@@ -641,7 +642,7 @@ export function CwdSheet({ mode, fromList = false }) {
                         role="option"
                         aria-selected=${dir.path === selected ? "true" : "false"}
                         data-path=${dir.path}
-                        title=${touch ? undefined : "Double-click to open"}
+                        title=${touch ? undefined : t("Double-click to open")}
                         onClick=${() => {
                             if (touch) {
                                 load(dir.path);
@@ -674,8 +675,8 @@ export function CwdSheet({ mode, fromList = false }) {
                         type="button"
                         class=${`icon-button fp-star ${starred ? "on" : ""}`}
                         aria-pressed=${starred ? "true" : "false"}
-                        aria-label=${starred ? "Remove from favorites" : "Add to favorites"}
-                        title=${starred ? "Remove from favorites" : "Add to favorites"}
+                        aria-label=${t(starred ? "Remove from favorites" : "Add to favorites")}
+                        title=${t(starred ? "Remove from favorites" : "Add to favorites")}
                         disabled=${saving}
                         onClick=${toggleFavorite}
                     >
@@ -711,7 +712,7 @@ export function CwdSheet({ mode, fromList = false }) {
                     disabled=${target === null || busy || here}
                     onClick=${() => use()}
                 >
-                    ${here ? "Already here" : changing ? "Move here" : "Open"}
+                    ${t(here ? "Already here" : changing ? "Move here" : "Open")}
                 </button>
             </div>
         </div>

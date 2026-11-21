@@ -3,6 +3,7 @@
 import { Component } from "preact";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { activityOpen } from "./activity-fold.js";
+import { t } from "./i18n.js";
 import {
     noteRevealed,
     onPresentationMode,
@@ -226,7 +227,7 @@ function MessageExtras({ entry, attachments }) {
         ${
             entry.images > 0 &&
             !attachments &&
-            html`<${EntryImages} entryId=${entry.id} count=${entry.images} label="Image" />`
+            html`<${EntryImages} entryId=${entry.id} count=${entry.images} label={t("Image")} />`
         }
     `;
 }
@@ -237,7 +238,7 @@ function authorName(entryId, view, users) {
     if (userId) {
         const user = users.find((each) => each.id === userId);
 
-        return user ? user.name : "Someone";
+        return user ? user.name : t("Someone");
     }
 
     return undefined;
@@ -397,7 +398,7 @@ function BackgroundOutput({ text, clipped }) {
         ${
             folds &&
             html`<button class="link" onClick=${() => setOpen(!open)}>
-                ${open ? "Show less" : `Show all ${lines.length} lines`}
+                ${open ? t("Show less") : t("Show all $ lines", lines.length)}
             </button>`
         }
     </div>`;
@@ -621,7 +622,7 @@ function LinkedMessage({ entry, view, address, text, attachments, fresh }) {
             class=${`prompt linked-message tappable ${folds ? "folds" : ""} ${open ? "open" : ""}`}
             data-part="prompt"
             data-from="linked"
-            title="Edit, send again, or copy"
+            title={t("Edit, send again, or copy")}
             tabindex="0"
             onClick=${(event) => openMessage(event, entry.id)}
             onKeyDown=${(event) => {
@@ -676,7 +677,7 @@ function LinkedMessage({ entry, view, address, text, attachments, fresh }) {
                     aria-controls=${`linked-body-${entry.id}`}
                     onClick=${() => setOpen(!open)}
                 >
-                    ${open ? "Show less" : `Show all · ${lines} lines`}
+                    ${open ? t("Show less") : t("Show all · $ lines", lines)}
                 </button>`
             }
         </div>
@@ -753,7 +754,7 @@ function UserMessage({ entry, view, users }) {
     const author =
         authorName(entry.id, view, users) ??
         entry.from ??
-        (view.conversation?.kind === "subagent" ? "Main agent" : undefined);
+        (view.conversation?.kind === "subagent" ? t("Main agent") : undefined);
     const [written, attachments] = splitAttachments(entry.text);
     // Set up earlier to go out now: by a person (who shows as its author) or by Pi.
     // Only a message nobody typed: someone writing "[via …]" themselves gets no label.
@@ -808,7 +809,7 @@ function UserMessage({ entry, view, users }) {
             class="prompt tappable"
             data-part="prompt"
             data-from=${from}
-            title="Edit, send again, or copy"
+            title={t("Edit, send again, or copy")}
             tabindex="0"
             onClick=${(event) => openMessage(event, entry.id)}
             onKeyDown=${(event) => {
@@ -893,7 +894,7 @@ function Collapsible({ text, limit = 600 }) {
     return html`<div class=${`collapsible ${open ? "open" : ""}`}>
         <${Markdown} text=${open ? text : `${text.slice(0, limit)}…`} />
         <button class="link" onClick=${() => setOpen(!open)}>
-            ${open ? "Show less" : "Show more"}
+            ${open ? t("Show less") : t("Show more")}
         </button>
     </div>`;
 }
@@ -1204,10 +1205,10 @@ function ThoughtStep({ block, streaming, reading }) {
             >
                 <${StepMark} status=${streaming ? "running" : "done"} kind="thought" />
                 <span class="step-label" data-part="step-label">
-                    ${streaming ? "Thinking" : block.redacted ? "Thought (redacted)" : "Thought"}
+                    ${streaming ? t("Thinking") : block.redacted ? t("Thought (redacted)") : t("Thought")}
                 </span>
                 <span class="step-subject"></span>
-                ${streaming && html`<${Spinner} label="Thinking" />`}
+                ${streaming && html`<${Spinner} label={t("Thinking")} />`}
             </button>
         </div>
         ${
@@ -1980,7 +1981,7 @@ function AskChoices({ field, chosen, busy, onChange }) {
                 class="ask-other"
                 type="text"
                 aria-label=${`Your own answer to: ${field.label}`}
-                placeholder=${field.placeholder ?? "Or type your own answer"}
+                placeholder=${field.placeholder ?? t("Or type your own answer")}
                 value=${other}
                 onInput=${(event) => onChange({ picked: [], other: event.currentTarget.value })}
             />`
@@ -2264,10 +2265,10 @@ function AskAnswers({ answers }) {
 /** What someone did with a call that waited for them: an ask (`host.ask`) is answered or declined. */
 function decided(decision) {
     if (decision.ask) {
-        return decision.allow ? "Answered" : "Declined";
+        return decision.allow ? t("Answered") : t("Declined");
     }
 
-    return decision.allow ? "Allowed" : "Denied";
+    return decision.allow ? t("Allowed") : t("Denied");
 }
 
 function ApprovalCard({ approval }) {
@@ -2334,7 +2335,7 @@ function ApprovalCard({ approval }) {
 // (`entry`, its `text`), whether it is pinned, and the reaction picker's state.
 defineItem("reply", {
     id: "core:time",
-    label: "Message time",
+    label: t("Message time"),
     order: 0,
     render: ({ entry }) => {
         if (!entry.at) {
@@ -2350,14 +2351,14 @@ defineItem("reply", {
 });
 defineItem("reply", {
     id: "core:react",
-    label: "React",
+    label: t("React"),
     order: 100,
     render: ({ picking, setPicking, react }) =>
         html`<span class="reaction-host answer-tool">
             <button
                 class="reaction add"
-                aria-label="React"
-                title="React"
+                aria-label={t("React")}
+                title={t("React")}
                 onClick=${() => setPicking(!picking)}
             >
                 ☺+
@@ -2374,7 +2375,7 @@ defineItem("reply", {
 });
 defineItem("reply", {
     id: "core:discuss",
-    label: "Discuss",
+    label: t("Discuss"),
     order: 200,
     render: ({ entry, text }) =>
         html`<button
@@ -2386,27 +2387,27 @@ defineItem("reply", {
 });
 defineItem("reply", {
     id: "core:pin",
-    label: "Pin",
+    label: t("Pin"),
     order: 300,
     render: ({ entry, pinned }) =>
         html`<button
             class="answer-tool"
             onClick=${() => attempt(() => actions.pin({ entryId: entry.id }))}
         >
-            ${pinned ? html`<${Icon} name="pin" size=${12} /> Pinned` : "Pin"}
+            ${pinned ? html`<${Icon} name="pin" size=${12} /> ${t("Pinned")}` : t("Pin")}
         </button>`,
 });
 defineItem("reply", {
     id: "core:copy",
-    label: "Copy",
+    label: t("Copy"),
     order: 400,
     render: ({ text }) =>
         html`<button
             class="answer-tool"
             onClick=${() =>
                 copyText(text).then(
-                    () => notify("info", "Copied."),
-                    () => notify("error", "Could not copy."),
+                    () => notify("info", t("Copied.")),
+                    () => notify("error", t("Could not copy.")),
                 )}
         >
             Copy
@@ -2414,13 +2415,13 @@ defineItem("reply", {
 });
 defineItem("reply", {
     id: "core:more",
-    label: "More",
+    label: t("More"),
     order: 1000,
     fixed: true,
     render: ({ entry }) =>
         html`<button
             class="answer-tool"
-            title="Fork, retry"
+            title={t("Fork, retry")}
             onClick=${() => openSheet({ type: "message", entryId: entry.id })}
         >
             More
@@ -2437,7 +2438,7 @@ function AnswerActions({ entry }) {
     const names = (ids) =>
         ids
             .map((id) =>
-                id === me?.id ? "you" : (users.find((user) => user.id === id)?.name ?? "someone"),
+                id === me?.id ? t("you") : (users.find((user) => user.id === id)?.name ?? t("someone")),
             )
             .join(", ");
 
@@ -2618,7 +2619,7 @@ function OutputCard({ entry, command, meta, failed = false, longCommand = false,
             ${
                 (long || longCommand) &&
                 html`<button class="link small" onClick=${() => setOpen(!open)}>
-                    ${open ? "Show less" : long ? `Show all ${lines.length} lines` : "Show all"}
+                    ${open ? t("Show less") : long ? t("Show all $ lines", lines.length) : t("Show all")}
                 </button>`
             }
             ${
@@ -2645,7 +2646,7 @@ function OutputCard({ entry, command, meta, failed = false, longCommand = false,
 
                             setFull(text);
                             await copyText(text);
-                            notify("info", "Copied the output.");
+                            notify("info", t("Copied the output."));
                         })}
                 >
                     Copy output
@@ -3245,7 +3246,7 @@ function LiveThought({ generation, entries, id }) {
 
     const empty = text === "";
     const streaming = thought?.streaming && !empty;
-    const label = empty ? "Thinking" : thought.writing ? "Current thought" : "Latest thought";
+    const label = empty ? t("Thinking") : thought.writing ? t("Current thought") : t("Latest thought");
     const shown = !empty
         ? text
         : thought?.block.redacted
@@ -3332,21 +3333,21 @@ function LiveLine({ live, approvals, start, entries, conversationId }) {
 
         state = canAnswer(approvals)
             ? asks
-                ? "Waiting for your answer"
-                : "Waiting for your approval"
+                ? t("Waiting for your answer")
+                : t("Waiting for your approval")
             : asks
-              ? "Waiting for an answer"
+              ? t("Waiting for an answer")
               : "Waiting for approval";
     } else if (limit) {
         state = `Waiting for ${limitWho(limit)}`;
     } else if (retry) {
-        state = "Retrying";
+        state = t("Retrying");
     } else if ((live.compactions ?? []).length > 0) {
-        state = "Compacting context";
+        state = t("Compacting context");
     } else if (working || (partial.length > 0 && partial.at(-1).type !== "thinking")) {
-        state = "Working";
+        state = t("Working");
     } else {
-        state = "Thinking";
+        state = t("Thinking");
     }
 
     const thoughtId = `live-thought-${conversationId}`;
@@ -3432,7 +3433,7 @@ function LiveLine({ live, approvals, start, entries, conversationId }) {
             live.busy &&
             canSteer() &&
             !COARSE.matches &&
-            html`<span class="live-esc" title="Press Esc twice">Esc stops</span>`
+            html`<span class="live-esc" title={t("Press Esc twice")}>{t("Esc stops")}</span>`
         }
     </div>`;
 }
@@ -3627,7 +3628,7 @@ export function Transcript() {
     }
 
     // Keep the snapshot's rows stable across unrelated UI updates, including scrolling the thought reading area. Only
-    // the entries this tab has, which are the newest: earlier ones load as "Show earlier messages" shows them.
+    // the entries this tab has, which are the newest: earlier ones load as t("Show earlier messages") shows them.
     const unloaded = useMemo(() => loadedFrom(view), [view.order, view.entries]);
     const entries = useMemo(
         () => view.order.slice(unloaded).map((id) => view.entries.get(id)),
@@ -3739,7 +3740,7 @@ export function Transcript() {
         }
 
         // Fix the first row shown, so rows arriving below never push the ones being read off the top: noted without a
-        // draw, as this draw began there already (`revealEntry` and "Show earlier messages" read it). While the reader
+        // draw, as this draw began there already (`revealEntry` and "Show earlier messages") read it). While the reader
         // follows along at the bottom, drop the oldest once there are twice as many as a fresh open shows.
         if (rows[start].id !== transcriptFrom) {
             store.note({ transcriptFrom: rows[start].id });
@@ -4159,7 +4160,7 @@ export function Transcript() {
                 start > 0 || unloaded > 0
                     ? html`<div class="divider">
                         <button class="link" disabled=${fetching} onClick=${showEarlier}>
-                            ${fetching ? html`<${Spinner} /> Loading earlier messages` : "Show earlier messages"}
+                            ${fetching ? html`<${Spinner} /> Loading earlier messages` : t("Show earlier messages")}
                         </button>
                     </div>`
                     : first &&
@@ -4214,7 +4215,7 @@ export function Transcript() {
             showJump &&
             html`<button
                 class="jump"
-                aria-label="To the bottom"
+                aria-label={t("To the bottom")}
                 onClick=${() => {
                     stick.current = true;
                     toBottom(scroller.current);

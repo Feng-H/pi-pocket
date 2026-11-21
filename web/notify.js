@@ -2,6 +2,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { callHost, hostCan } from "./host.js";
 import { api, attempt, closeSheet, notify, sessionUnread } from "./store.js";
+import { t } from "./i18n.js";
 import { html, Loader, Sheet, Switch } from "./ui.js";
 
 const supported =
@@ -177,7 +178,7 @@ export function NotificationsSheet() {
 
                 setSubscription(current);
                 setInfo({ ...info, devices: result.devices });
-                notify("info", "Notifications are on for this device.");
+                notify("info", t("Notifications are on for this device."));
             } finally {
                 setBusy(false);
             }
@@ -205,7 +206,7 @@ export function NotificationsSheet() {
     const test = () =>
         attempt(async () => {
             await api("push/test", {});
-            notify("info", "Test sent. It shows as a system notification.");
+            notify("info", t("Test sent. It shows as a system notification."));
         });
 
     const on = Boolean(subscription);

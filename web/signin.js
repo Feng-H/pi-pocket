@@ -2,6 +2,7 @@
 
 import { useState } from "preact/hooks";
 import { html } from "./ui.js";
+import { t } from "./i18n.js";
 
 export function SignIn() {
     const [value, setValue] = useState("");
@@ -43,7 +44,7 @@ export function SignIn() {
         <div class="row">
             <input
                 value=${value}
-                placeholder="Link, token, or invite code"
+                placeholder={t("Link, token, or invite code")}
                 autocapitalize="none"
                 autocorrect="off"
                 autocomplete="off"
@@ -51,7 +52,7 @@ export function SignIn() {
                 onInput=${(event) => setValue(event.currentTarget.value)}
                 onKeyDown=${(event) => event.key === "Enter" && go()}
             />
-            <button class="button primary" onClick=${go}>Sign in</button>
+            <button class="button primary" onClick=${go}>{t("Sign in")}</button>
         </div>
     </div>`;
 }

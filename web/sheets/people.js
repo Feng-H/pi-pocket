@@ -14,10 +14,11 @@ import {
     store,
 } from "../store.js";
 import { copyText, html, Icon, Loader, Sheet, timeAgo } from "../ui.js";
+import { t } from "../i18n.js";
 
 const ROLE_TEXT = {
-    guest: "Can steer Pi, which can run commands on this machine",
-    viewer: "Can read along, react, and chat, but not steer Pi",
+    guest: t("Can steer Pi, which can run commands on this machine"),
+    viewer: t("Can read along, react, and chat, but not steer Pi"),
 };
 
 /** How long an invite may last: minutes, its button, and how the help text says it. */
@@ -111,7 +112,7 @@ export function InviteSheet({ session = null }) {
             if (asOwner && answer.grant?.role !== "owner") {
                 setFailed(true);
 
-                throw new Error("Restart Pi Pocket to sign in another device as the owner.");
+                throw new Error(t("Restart Pi Pocket to sign in another device as the owner."));
             }
 
             shown.current = answer;
@@ -137,7 +138,7 @@ export function InviteSheet({ session = null }) {
         ([each]) => each === (invite ? (invite.minutes ?? 15) : minutes),
     )?.[2];
 
-    return html`<${Sheet} title="Invite someone" onClose=${closeSheet}>
+    return html`<${Sheet} title={t("Invite someone")} onClose=${closeSheet}>
         ${
             me?.role === "owner" &&
             html`<label class="check">
@@ -153,7 +154,7 @@ export function InviteSheet({ session = null }) {
             collab() &&
             !asOwner &&
             html`<div class="field">
-                <div class="label">They can</div>
+                <div class="label">${t("They can")}</div>
                 <div class="segmented">
                     <button
                         class=${role === "guest" ? "on" : ""}
@@ -200,7 +201,7 @@ export function InviteSheet({ session = null }) {
         ${
             !asOwner &&
             html`<div class="field">
-                <div class="label">Expires after</div>
+                <div class="label">${t("Expires after")}</div>
                 <div class="segmented">
                     ${LASTS.map(
                         ([each, label]) => html`<button
@@ -238,12 +239,12 @@ export function InviteSheet({ session = null }) {
                     <div class="qr" dangerouslySetInnerHTML=${{ __html: invite.svg }}></div>
                     <div class="invite-code">
                         <div class="invite-code-head">
-                            <span>Invite code</span>
+                            <span>${t("Invite code")}</span>
                             <button
                                 class="link small"
                                 onClick=${() =>
                                     copyText(invite.code).then(
-                                        () => notify("info", "Code copied."),
+                                        () => notify("info", t("Code copied.")),
                                         () => notify("error", "Could not copy."),
                                     )}
                             >
@@ -273,7 +274,7 @@ export function InviteSheet({ session = null }) {
                             class="button"
                             onClick=${() =>
                                 copyText(invite.url).then(
-                                    () => notify("info", "Link copied."),
+                                    () => notify("info", t("Link copied.")),
                                     () => notify("error", "Could not copy."),
                                 )}
                         >
@@ -291,9 +292,9 @@ export function InviteSheet({ session = null }) {
                 </div>`
                 : failed
                   ? html`<p class="muted small">No invite yet. Tap New invite to try again.</p>`
-                  : html`<${Loader} label="Making an invite" />`
+                  : html`<${Loader} label={t("Making an invite")} />`
         }
-        <button class="button wide" onClick=${create}>New invite</button>
+        <button class="button wide" onClick=${create}> ${t("New invite")}</button>
         ${!collab() && html`<${PeopleList} />`}
     <//>`;
 }
@@ -330,7 +331,7 @@ export function MyPhoto() {
         <${Avatar} person=${person} size=${48} />
         <input ref=${input} type="file" accept="image/*" hidden onChange=${choose} />
         <button class="button" onClick=${() => input.current.click()}>
-            ${person.avatar ? "Change photo" : "Add photo"}
+            ${person.avatar ? t("Change photo") : t("Add photo")}
         </button>
         ${
             person.avatar &&
@@ -358,7 +359,7 @@ function PeopleList() {
         attempt(async () => store.set({ users: await actions.setAccess(person.id, patch) }));
 
     return html`<div class="group">
-        <div class="group-title">People</div>
+        <div class="group-title">${t("People")}</div>
         <div class="sheet-list">
         ${ordered.map(
             (person) => html`<div class="person-row" key=${person.id}>
@@ -387,10 +388,10 @@ function PeopleList() {
                             collab() &&
                             html`<button
                                 class="button small"
-                                title="Change what they can do"
+                                title={t("Change what they can do")}
                                 onClick=${() => change(person, { role: person.role === "viewer" ? "guest" : "viewer" })}
                             >
-                                ${person.role === "viewer" ? "Let steer" : "View only"}
+                                ${person.role === "viewer" ? t("Let steer") : t("View only")}
                             </button>`
                         }
                         ${
@@ -398,7 +399,7 @@ function PeopleList() {
                             person.sessions &&
                             html`<button
                                 class="button small"
-                                title="Let them see every session"
+                                title={t("Let them see every session")}
                                 onClick=${() => change(person, { sessions: null })}
                             >
                                 All sessions
@@ -430,7 +431,7 @@ function PeopleList() {
 export function PeopleSheet() {
     const canInvite = canSteer() && !scoped();
 
-    return html`<${Sheet} title="People" onClose=${closeSheet}>
+    return html`<${Sheet} title={t("People")} onClose=${closeSheet}>
         ${
             canInvite &&
             html`<button class="button primary wide" onClick=${() => openSheet({ type: "invite" })}>
