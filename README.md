@@ -17,6 +17,19 @@ Runs on your own machine or directly on your phone. No cloud VM.
 
 </div>
 
+## Fork changes (Feng-H)
+
+This fork is a personal agent deployment. Everything upstream stays; these are the additions:
+
+- **Channels.** Discord-style long-lived conversations the agent answers in (`/channel name`). The sidebar groups them under CHANNELS with a `+` that creates one; names are unique (the server refuses a second of the same); channels rename like any session; archived ones stay mentionable, marked as archived.
+- **`#` channel mentions.** Typing `#` in the message box offers the channels; a pick writes `#name`, and what reaches Pi includes a hidden context part naming that session, so `session_read` can read it when the question needs it.
+- **`channel_post`.** Pi can post a message into another channel itself: it arrives there as a message, and that channel's Pi reads it and answers in its own channel.
+- **`search_history`.** The archive cabinet: search the original entries of this conversation or of every session — what a compaction summary may have shortened away. The prompt's guidelines tell Pi to look before it guesses.
+- **Voice messages with Groq dictation.** The mic records a voice message and sends it; the server hears it with Groq's Whisper (`POST /api/stt`) and what it says becomes the message, visible in the sender's own bubble. The hearing is pickable per person (auto / 中文 / English / Deutsch). Without a Groq key the mic dictates with the browser's own speech.
+- **中文界面.** A 中文/EN chip beside the session list turns the whole interface at once (`web/i18n.js`); the pick stays with the browser. Sheets, menus, launcher, the appearance sheet, and the session list all read Chinese.
+
+Upstream: [TannerMidd/pi-pocket](https://github.com/TannerMidd/pi-pocket) (MIT). Everything below is upstream's README.
+
 ## Highlights
 
 - **Durable.** Every model call, tool call, and subagent is stored as it happens. Restart the server mid-run, and the work continues.
