@@ -55,15 +55,15 @@ function ThemeCard({ id, desktop = false }) {
         <div class="tc-win"><i></i><i></i><i class="lit"></i></div>
     </div>`;
     const name = html`<div class="tc-name">
-        ${desktop ? `Desktop · ${palette.name}` : palette.name}
-        ${palette.pair ? html`<small>light and dark</small>` : palette.colors.mode === "light" && html`<small>light</small>`}
+        ${desktop ? t("Desktop · $", palette.name) : palette.name}
+        ${palette.pair ? html`<small>${t("light and dark")}</small>` : palette.colors.mode === "light" && html`<small>${t("light")}</small>`}
     </div>`;
 
     return html`<button
         class=${`theme-card ${on ? "on" : ""} ${desktop ? "theme-desktop" : ""}`}
         aria-pressed=${on}
         style=${vars}
-        title=${desktop ? "Follow the Omarchy theme of the machine Pi Pocket runs on" : palette.name}
+        title=${desktop ? t("Follow the Omarchy theme of the machine Pi Pocket runs on") : palette.name}
         onMouseEnter=${() => matchMedia("(hover: hover)").matches && preview(id)}
         onMouseLeave=${() => preview(null)}
         onFocus=${() => preview(id)}
@@ -76,7 +76,7 @@ function ThemeCard({ id, desktop = false }) {
                 ? html`<div class="tc-text">
                     ${name}
                     <div class="tc-note">
-                        Follows your desktop: change the Omarchy theme and Pi Pocket changes with it.
+                        ${t("Follows your desktop: change the Omarchy theme and Pi Pocket changes with it.")}
                     </div>
                     <div class="tc-dots">
                         ${dots.map((dot) => html`<i style=${`background:var(${dot})`}></i>`)}
@@ -112,8 +112,8 @@ function LookCard({ id }) {
     >
         <span class="look-name">
             ${look.name}
-            ${look.builtIn && html`<small>built in</small>`}
-            ${look.colors && html`<small>own colors</small>`}
+            ${look.builtIn && html`<small>${t("built in")}</small>`}
+            ${look.colors && html`<small>${t("own colors")}</small>`}
         </span>
         ${look.description && html`<span class="look-detail">${look.description}</span>`}
         ${look.problem && html`<span class="look-problem">${look.problem}</span>`}
@@ -242,11 +242,11 @@ function LookTools() {
                             class="button"
                             onClick=${() => openSheet({ type: "gallery-share", id, theme: true })}
                         >
-                            {t("Share…")}
+                            ${t("Share…")}
                         </button>`
                     }
                     <button class="button ghost" onClick=${remove}>${t("Remove")}</button>`
-                : html`<span class="muted small">{t("Duplicate it to make a theme of your own.")}</span>`
+                : html`<span class="muted small">${t("Duplicate it to make a theme of your own.")}</span>`
         }
     </div>`;
 }
@@ -375,19 +375,19 @@ function FontTools() {
               </label>`;
     };
 
-    return html`<section class="font-tools" aria-label=${`Fonts for ${look.name}`}>
-        <h4 class="font-title">Fonts for <em>${look.name}</em></h4>
-        ${menu("Text font", TEXT_FONTS, "sans")}
-        ${menu("Code font", CODE_FONTS, "mono")}
+    return html`<section class="font-tools" aria-label=${t("Fonts for $", look.name)}>
+        <h4 class="font-title">${t("Fonts for")} <em>${look.name}</em></h4>
+        ${menu(t("Text font"), TEXT_FONTS, "sans")}
+        ${menu(t("Code font"), CODE_FONTS, "mono")}
         <div class="font-menu">
-            <span>Ligatures</span>
+            <span>${t("Ligatures")}</span>
             ${
                 look.builtIn
                     ? html`<strong>${set.ligatures ? "On" : "Off"}</strong>`
                     : html`<div class="font-ligatures">
                           <${Switch}
                               on=${set.ligatures}
-                              label="Ligatures"
+                              label={t("Ligatures")}
                               onChange=${() => save({ ligatures: !set.ligatures })}
                           />
                           <button
@@ -399,7 +399,7 @@ function FontTools() {
                       </div>`
             }
         </div>
-        <div class="font-preview" role="group" aria-label="Font preview">
+        <div class="font-preview" role="group" aria-label={t("Font preview")}>
             The quick brown fox jumps over the lazy dog. <em>Emphasis.</em>
             <code>const ok = (x) => x !== 42; <span class="hl-com">// a comment</span></code>
         </div>
@@ -421,10 +421,10 @@ function FontTools() {
                   </div>`
                 : html`<div class="font-duplicate">
                       <button class="button" onClick=${() => setNaming(true)}>
-                          <${Icon} name="copy" size=${14} /> Duplicate to change
+                          <${Icon} name="copy" size=${14} /> ${t("Duplicate to change")}
                       </button>
                       <span class="muted small">
-                          ${look.name} comes with the app: its fonts stay as they are.
+                          ${t("$ comes with the app: its fonts stay as they are.", look.name)}
                       </span>
                   </div>`)
         }
@@ -520,7 +520,7 @@ function DefaultTools() {
 
     return html`<div class="look-tools">
         <span class="muted small grow">
-            ${current ? `For new browsers: ${name(current.look, current.colors)}.` : `New browsers start with ${name(BASE_LOOK, "desktop")}.`}
+            ${current ? t("For new browsers: $.", name(current.look, current.colors)) : t("New browsers start with $.", name(BASE_LOOK, "desktop"))}
         </span>
         ${
             !same &&
@@ -624,7 +624,7 @@ export function AppearanceSheet() {
 
     useEffect(() => () => preview(null), []);
 
-    return html`<${Sheet} title={t("Appearance")} onClose=${closeSheet} wide=${true}>
+    return html`<${Sheet} title=${t("Appearance")} onClose=${closeSheet} wide=${true}>
         <div class="label">${t("Theme")}</div>
         <div class="look-grid">
             ${lookIds().map((id) => html`<${LookCard} key=${id} id=${id} />`)}
@@ -649,41 +649,41 @@ export function AppearanceSheet() {
         <div class="label">${t("Layout and motion")}</div>
         <div class="sheet-list">
             <${SettingRow}
-                title={t("Tiled windows")}
-                detail={t("Wide screens: the sidebar and the session as Hyprland windows, with gaps and the active border")}
+                title=${t("Tiled windows")}
+                detail=${t("Wide screens: the sidebar and the session as Hyprland windows, with gaps and the active border")}
             >
                 <${Switch}
                     on=${p.tiling}
-                    label={t("Tiled windows")}
+                    label=${t("Tiled windows")}
                     onChange=${() => setPrefs({ tiling: !p.tiling })}
                 />
             <//>
             <${SettingRow}
-                title={t("Peek tiles")}
+                title=${t("Peek tiles")}
                 detail=${t(`Other sessions beside this one, live while on screen: working, waiting for you, done since you looked, and pinned. Also the tiles button in the top bar`, touch ? "" : ", or Alt+P")}
             >
                 <${Switch}
                     on=${p.peeks}
-                    label={t("Peek tiles")}
+                    label=${t("Peek tiles")}
                     onChange=${() => setPrefs({ peeks: !p.peeks })}
                 />
             <//>
             ${
                 desktop?.wallpaper &&
                 html`<${SettingRow}
-                    title={t("Desktop wallpaper")}
-                    detail={t("Your wallpaper in the gaps between windows, while following the desktop")}
+                    title=${t("Desktop wallpaper")}
+                    detail=${t("Your wallpaper in the gaps between windows, while following the desktop")}
                 >
                     <${Switch}
                         on=${p.wallpaper}
                         disabled=${!p.tiling || p.theme !== "desktop"}
-                        label={t("Desktop wallpaper")}
+                        label=${t("Desktop wallpaper")}
                         onChange=${() => setPrefs({ wallpaper: !p.wallpaper })}
                     />
                 <//>`
             }
             <${SettingRow}
-                title={t("Switch sessions with")}
+                title=${t("Switch sessions with")}
                 detail="Tabs: a strip above the session, one segment for each of the first nine sessions. Choosing Tabs folds the sidebar to its rail, and Sidebar unfolds it"
             >
                 <div class="segmented">
@@ -708,8 +708,8 @@ export function AppearanceSheet() {
                 </div>
             <//>
             <${SettingRow}
-                title={t("Sidebar")}
-                detail={t("Folded, it shows numbered sessions like workspaces")}
+                title=${t("Sidebar")}
+                detail=${t("Folded, it shows numbered sessions like workspaces")}
             >
                 <div class="segmented">
                     ${[
@@ -730,7 +730,7 @@ export function AppearanceSheet() {
             ${
                 pipAvailable() &&
                 html`<${SettingRow}
-                    title={t("PiP")}
+                    title=${t("PiP")}
                     detail="Floating: a window in the corner, or a sheet on a phone. Board: its conversation in the session's place, with every step and its menu"
                 >
                     <div class="segmented">
@@ -751,7 +751,7 @@ export function AppearanceSheet() {
                 <//>`
             }
             <${SettingRow}
-                title={t("Motion")}
+                title=${t("Motion")}
                 detail="Auto follows your system's reduced-motion setting. Fluid adds springs, staggered entrances, and layout changes that morph"
             >
                 <div class="segmented">
@@ -773,14 +773,14 @@ export function AppearanceSheet() {
                 </div>
             <//>
             <${SettingRow}
-                title={t("Text size")}
+                title=${t("Text size")}
                 detail=${t("The conversation's, in pixels: any from $ to $", MIN_TEXT, MAX_TEXT)}
             >
                 <${TextSize} size=${textSizeOf(p.text)} />
             <//>
             <${SettingRow}
-                title={t("Width")}
-                detail={t("Wide screens: how much of the window the conversation and the message box take. Comfortable grows with the window")}
+                title=${t("Width")}
+                detail=${t("Wide screens: how much of the window the conversation and the message box take. Comfortable grows with the window")}
             >
                 <div class="segmented">
                     ${[
@@ -800,8 +800,8 @@ export function AppearanceSheet() {
                 </div>
             <//>
             <${SettingRow}
-                title={t("Density")}
-                detail={t("Less room around messages, rows, and the message box, to fit more on a screen")}
+                title=${t("Density")}
+                detail=${t("Less room around messages, rows, and the message box, to fit more on a screen")}
             >
                 <div class="segmented">
                     ${[
@@ -824,39 +824,39 @@ export function AppearanceSheet() {
         <div class="label">${t("Conversation")}</div>
         <div class="sheet-list">
             <${SettingRow}
-                title={t("Show thinking")}
+                title=${t("Show thinking")}
                 detail=${t(`Shows Pi's current thought above the live line as it comes, and its finished thoughts. The chevron before the line folds the live one`, touch ? "" : ". Also Alt+T")}
             >
                 <${Switch}
                     on=${p.showThinking}
-                    label={t("Show thinking")}
+                    label=${t("Show thinking")}
                     onChange=${() => setPrefs({ showThinking: !p.showThinking })}
                 />
             <//>
             <${SettingRow}
-                title={t("Keep activity folded")}
-                detail={t("Pi's thinking and tool calls stay on their one line until you open them, also while it works and in the newest turn")}
+                title=${t("Keep activity folded")}
+                detail=${t("Pi's thinking and tool calls stay on their one line until you open them, also while it works and in the newest turn")}
             >
                 <${Switch}
                     on=${p.foldActivity}
-                    label={t("Keep activity folded")}
+                    label=${t("Keep activity folded")}
                     onChange=${() => setPrefs({ foldActivity: !p.foldActivity })}
                 />
             <//>
             <${SettingRow}
-                title={t("Reply to a passage")}
-                detail={t("Select words in one of Pi's replies, and a Reply button by them quotes them in your next message")}
+                title=${t("Reply to a passage")}
+                detail=${t("Select words in one of Pi's replies, and a Reply button by them quotes them in your next message")}
             >
                 <${Switch}
                     on=${p.quoteReply}
-                    label={t("Reply to a passage")}
+                    label=${t("Reply to a passage")}
                     onChange=${() => setPrefs({ quoteReply: !p.quoteReply })}
                 />
             <//>
             ${
                 p.quoteReply &&
                 html`<${SettingRow}
-                    title={t("Quotes in the message box")}
+                    title=${t("Quotes in the message box")}
                     detail="How a passage you reply to shows. In the box, with your words: Fade, a tint that fades out to the right; Tint, a soft block; Ghost, faded words only. Separate: each in a strip over the box, sent first"
                 >
                     <div class="segmented">
@@ -876,23 +876,23 @@ export function AppearanceSheet() {
             ${
                 pipAvailable() &&
                 html`<${SettingRow}
-                    title={t("Ask PiP about a passage")}
-                    detail={t("Select words in one of Pi's replies, and PiP's orb by them asks PiP about them, and tells it which session they came from")}
+                    title=${t("Ask PiP about a passage")}
+                    detail=${t("Select words in one of Pi's replies, and PiP's orb by them asks PiP about them, and tells it which session they came from")}
                 >
                     <${Switch}
                         on=${p.askPipQuote}
-                        label={t("Ask PiP about a passage")}
+                        label=${t("Ask PiP about a passage")}
                         onChange=${() => setPrefs({ askPipQuote: !p.askPipQuote })}
                     />
                 <//>`
             }
             <${SettingRow}
-                title={t("Wait for updates")}
+                title=${t("Wait for updates")}
                 detail="Going back to a session that changed while you were away: show it once its updates have come, instead of your last copy at once with the updates sliding in"
             >
                 <${Switch}
                     on=${p.waitForUpdates}
-                    label={t("Wait for updates")}
+                    label=${t("Wait for updates")}
                     onChange=${() => setPrefs({ waitForUpdates: !p.waitForUpdates })}
                 />
             <//>
@@ -900,12 +900,12 @@ export function AppearanceSheet() {
         <div class="label">${t("Status line")}</div>
         <div class="sheet-list">
             <${SettingRow}
-                title={t("Reply speed")}
-                detail={t("Under the message box: how fast the last answer came, in tokens a second, and how long its first token took")}
+                title=${t("Reply speed")}
+                detail=${t("Under the message box: how fast the last answer came, in tokens a second, and how long its first token took")}
             >
                 <${Switch}
                     on=${p.speed}
-                    label={t("Reply speed")}
+                    label=${t("Reply speed")}
                     onChange=${() => setPrefs({ speed: !p.speed })}
                 />
             <//>
