@@ -1,136 +1,72 @@
 <div align="center">
 
-# Pi Pocket
+# Pi Pocket · 个人版
 
-**Your Pi coding agent, in your pocket.**
+**我的个人 Agent——在 [TannerMidd/pi-pocket](https://github.com/TannerMidd/pi-pocket) 之上的自主改造版本。**
+**My personal agent — a fork of [TannerMidd/pi-pocket](https://github.com/TannerMidd/pi-pocket), extended for my own use.**
 
-A durable, multiplayer, mobile-first web app for Pi agents, built on [Pi Durable](https://earendil.com/posts/pi-durable/).<br>
-Runs on your own machine or directly on your phone. No cloud VM.
+基于 [Pi Durable](https://earendil.com/posts/pi-durable/) 的持久化、多人、移动优先 Web 应用。
+A durable, multiplayer, mobile-first web app for Pi agents, built on Pi Durable.
 
-[![Release](https://img.shields.io/github/v/release/TannerMidd/pi-pocket?color=7aa2f7)](https://github.com/TannerMidd/pi-pocket/releases)
-[![Node.js 22.19+](https://img.shields.io/badge/node-%E2%89%A5%2022.19-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[原始 README(英文)](./README-UPSTREAM.md) · [功能全览 / Feature tour](docs/features.md) · [上游文档 / Upstream docs](https://tannermidd.github.io/pi-pocket/docs/)
+
 [![MIT license](https://img.shields.io/badge/license-MIT-ff9e64)](LICENSE)
-
-[Website](https://tannermidd.github.io/pi-pocket/) · [Quick start](#quick-start) · [Feature tour](docs/features.md) · [Docs](https://tannermidd.github.io/pi-pocket/docs/)
-
-<img src="docs/showcase-0.12.1.png" alt="Pi Pocket in the Tokyo Night theme, on a desktop and a phone. On the desktop, the session list beside a conversation where Pi has fixed a sign-in redirect loop, its edits and a passing run of 48 tests folded into a timeline. On the phone, the same session after a teammate, Alex, asks for the push: Lancet Guard waits for approval before git push." width="100%">
+[![Node.js 22.19+](https://img.shields.io/badge/node-%E2%89%A5%2022.19-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![Upstream](https://img.shields.io/badge/upstream-v0.29.0-7aa2f7)](https://github.com/TannerMidd/pi-pocket/releases)
 
 </div>
 
-## Fork changes (Feng-H)
+> **原始 README(英文,未改动)/ The original README, untouched:** [README-UPSTREAM.md](./README-UPSTREAM.md)。
+> 本文件只写这个 fork 自己的改动。This file documents only what the fork adds.
 
-This fork is a personal agent deployment. Everything upstream stays; these are the additions:
+## 这个 fork 加了什么 / What this fork adds
 
-- **Channels.** Discord-style long-lived conversations the agent answers in (`/channel name`). The sidebar groups them under CHANNELS with a `+` that creates one; names are unique (the server refuses a second of the same); channels rename like any session; archived ones stay mentionable, marked as archived.
-- **`#` channel mentions.** Typing `#` in the message box offers the channels; a pick writes `#name`, and what reaches Pi includes a hidden context part naming that session, so `session_read` can read it when the question needs it.
-- **`channel_post`.** Pi can post a message into another channel itself: it arrives there as a message, and that channel's Pi reads it and answers in its own channel.
-- **`search_history`.** The archive cabinet: search the original entries of this conversation or of every session — what a compaction summary may have shortened away. The prompt's guidelines tell Pi to look before it guesses.
-- **Voice messages with Groq dictation.** The mic records a voice message and sends it; the server hears it with Groq's Whisper (`POST /api/stt`) and what it says becomes the message, visible in the sender's own bubble. The hearing is pickable per person (auto / 中文 / English / Deutsch). Without a Groq key the mic dictates with the browser's own speech.
-- **中文界面.** A 中文/EN chip beside the session list turns the whole interface at once (`web/i18n.js`); the pick stays with the browser. Sheets, menus, launcher, the appearance sheet, and the session list all read Chinese.
+### 频道体系 / Channels
 
-Upstream: [TannerMidd/pi-pocket](https://github.com/TannerMidd/pi-pocket) (MIT). Everything below is upstream's README.
+- Discord 式长驻频道:`/channel 名字` 创建,侧栏 **CHANNELS** 分组收纳,分组头带 `+` 直接新建
+- 重名校验:同名频道服务端直接拒绝(409),大小写、`#`、首尾空格归一化
+- 可随时重命名(长按 → 重命名);归档的频道**仍可被 `#` 引用**,候选里带"归档"标记
+- English: Discord-style long-lived conversations with a CHANNELS section and a `+` to create; unique names (the server refuses a second, whatever the case); channels rename like any session; archived ones stay mentionable, marked as archived.
 
-## Highlights
+### `#` 频道引用与跨频道推送 / Mentions & posts
 
-- **Durable.** Every model call, tool call, and subagent is stored as it happens. Restart the server mid-run, and the work continues.
-- **Multiplayer.** Share a live session with presence, a side chat Pi does not see, invites, and roles.
-- **Made for phones.** Push notifications, dictation, sharing into Pi from other apps, and a home-screen app.
-- **PiP.** An assistant that starts, follows, and reports on your other sessions, and watches GitHub for you.
-- **Your models.** Pi's own providers, sign-ins, skills, and prompt templates, with the model chosen per session.
-- **Live-editable.** No build step. Pi can change Pi Pocket while it runs, and you can add your own extensions.
+- 对话框输入 `#` 弹出频道候选(随输入过滤),选中插入 `#名字`
+- 发送后 agent 收到**隐藏上下文**:被引用频道对应哪个会话,可用 `session_read` 深读
+- 工具 **`channel_post`**:agent 主动把消息推进别的频道——消息以 `[via channel #来源]` 到达,对方 Pi 在本频道读取并回答
+- English: typing `#` offers the channels; a pick writes `#name` and a hidden context part names that session for `session_read`. `channel_post` lets Pi push a message into another channel, whose Pi reads it and answers in place.
 
-The [feature tour](docs/features.md) covers everything else, from plan mode and peek tiles to the built-in browser.
+### search_history · 历史档案柜 / The archive cabinet
 
-## Quick start
+- 长对话触发摘要(Compaction)后丢细节?工具 **`search_history`** 直接检索**原始条目**:本会话、全部会话、或指定会话
+- 系统提示词立规矩:问早期细节/"昨天"/可见上下文外的内容,**必须先查再答,不许猜**;跨会话用 `scope: "all"`,配合 `session_read`
+- English: search the original entries — this conversation or every session — before answering anything the visible context may not hold. Never guess what a search would tell.
 
-Requires Node.js 22.19 or newer. Runs on Linux, macOS, Windows, and Android (Termux); Linux is the most tested. Sign in to a provider with Pi first (`pi`, then `/login`), or later from the app's Providers sheet.
+### 语音消息 + Groq 听写 / Voice messages & dictation
+
+- 麦克风按下即录、再按即发:录音**直接作为消息**进入对话,服务端 Groq Whisper 转写,转写文字显示在发送者气泡里,agent 直接读到
+- 识别语言按人可选(自动 / 中文 / English / Deutsch);上传失败自动重试;iOS 的停止事件丢失也有兜底
+- 未配置 Groq key 时,麦克风回退为浏览器听写(Web Speech)
+- English: the mic records and sends; the server hears it with Groq's Whisper and what it says becomes the message. The hearing is pickable per person (auto / 中文 / English / Deutsch).
+
+### 中文界面 / 中文界面优先
+
+- **全界面中文化**:侧栏、启动器、菜单、外观设置、各弹窗、对话工具条
+- 侧栏旁 **中文 / EN** 一键切换,即时生效,按浏览器记忆
+- English: the whole interface speaks Chinese; a 中文/EN chip switches at once, per browser.
+
+## 运行 / Run
+
+与上游一致 / Same as upstream: Node.js ≥ 22.19,无构建步骤,`npm install` 后直接跑。
 
 ```bash
-npm install -g pi-pocket
-pi-pocket
-```
-
-Newer npm may print "install-scripts ... not yet covered by allowScripts" for `@google/genai` and `protobufjs`, which come from Pi's model library. The warning is expected: Pi Pocket needs neither script. `npm config set allow-scripts=@google/genai,protobufjs --location=user` quiets it by letting both run, which does no harm.
-
-Or try it with `npx pi-pocket`. To change Pi Pocket's code, run a git checkout instead:
-
-```bash
-git clone https://github.com/TannerMidd/pi-pocket.git
-cd pi-pocket
 npm install
-npm start
+node bin/pi-pocket.js
 ```
 
-The launcher asks how your devices should connect, then prints a sign-in link and a QR code. The link is the owner's key: keep it private. `--rotate-token` replaces it and signs out every device that used it.
+语音转文字需在 `.env.local` 配置 `GROQ_API_KEY`(systemd 部署用 `EnvironmentFile` 加载)。无 key 时语音退化为浏览器听写。
 
-While it runs: **q** quit · **r** restart server · **a** change access · **o** open in browser · **s** show QR code.
+本 fork 不跟随上游自动更新;需要时从 upstream 手动 cherry-pick。This fork does not follow upstream automatically; cherry-pick by hand when wanted.
 
-**Updating:** Menu → **Update Pi Pocket** updates a git checkout run with `npm start`, or a global npm install (`npm install -g pi-pocket`) that your user can write, and restarts. It goes back by itself if the new version does not start ([features](docs/features.md)). A local install (`npm install pi-pocket` in a project) and `npx pi-pocket` do not update from the app: the sheet says what to run, `npm install pi-pocket@latest` or `npx pi-pocket@latest`. By hand: stop the server, back up `~/.pi-pocket`, pull, run `npm install`, and start again; for a global install, run `npm install -g pi-pocket@latest`. If the machine stops at the very moment of the switch, `pi-pocket` may not start; `npm install -g pi-pocket` restores it. Read the [release notes](https://github.com/TannerMidd/pi-pocket/releases) first: 0.21.0 and 0.28.0 upgrade the data one way, so going back needs the backup.
+## 许可 / License
 
-### Other ways to run it
-
-- **Docker or Podman:** `docker compose up -d --build`. See [docs/docker.md](docs/docker.md).
-- **Nix:** `nix run github:TannerMidd/pi-pocket`, or the NixOS module `services.pi-pocket.enable = true;` ([nix/module.nix](nix/module.nix)).
-- **Android (Termux):**
-
-    ```bash
-    pkg update && pkg upgrade && pkg install nodejs git
-    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
-    pi    # /login, then quit
-    git clone https://github.com/TannerMidd/pi-pocket.git
-    cd pi-pocket && npm install --ignore-scripts && termux-wake-lock && npm start
-    ```
-
-    Lancet Guard may not load on Android. If it is on but fails, start with `PI_POCKET_GUARD=off`.
-
-## Remote access
-
-Choose a mode in the launcher, or pass `--access`:
-
-| Mode              | Who can connect      | Notes                                                      |
-| ----------------- | -------------------- | ---------------------------------------------------------- |
-| `local`           | This machine         | `127.0.0.1`; bring your own tunnel to port 8787            |
-| `lan`             | Your local network   | Plain http                                                 |
-| `cloudflare`      | Anyone with the link | Free https quick tunnel, no account; needs `cloudflared`   |
-| `tailscale`       | Your tailnet         | Plain http on the tailnet address                          |
-| `tailscale-serve` | Your tailnet         | https at the tailnet name; needs `tailscale` 1.52 or newer |
-
-`tailscale-serve` needs the `tailscale` command on your `PATH`, signed in, with MagicDNS and HTTPS certificates enabled in the tailnet, and, when the launcher does not run as root, that user as tailscaled's operator (`sudo tailscale set --operator=$USER`). It serves port 443 at the machine's tailnet name, and a server restart keeps the address. When the launcher quits it takes down the mount it made; one it found already in place is left where it is. Without the command the launcher says so and stops rather than falling back to this device only when nobody is there to pick another mode. `--host` cannot be combined with it: serve always listens on `127.0.0.1` and lets tailscaled reach it. For another tunnel (ngrok), choose `local` and point it at port 8787.
-
-Other options: `--port` (8787), `--cwd`, `--data` (`~/.pi-pocket`), `--host`, and `-y` to reuse the last access choice. `--host` overrides the address a named mode would listen on, and one launcher runs per data folder (a second one says which pid holds it). `npm start -- --help` lists them all. `PI_POCKET_BROWSER` and `PI_POCKET_BROWSER_ARGS` pick the built-in browser and its flags when Chromium or Chrome is not found by itself. `PI_POCKET_PROMPT_DATE=1` puts today's date in Pi's system prompt; it is left out by default, so the prompt cache does not start over when the date changes. `PI_POCKET_SESSION_CACHE=off` keeps browsers from saving the sessions they open on the device (IndexedDB), so that they keep them in each tab's memory only; it is on by default. `PI_POCKET_CACHE_KEEPER=off` turns off the prompt cache keeper, which keeps a model's prompt cache warm while a run waits on a tool call ([features](docs/features.md)). `PI_POCKET_KEEPALIVE_SECONDS` (default `5`, from `1` to `3600`) is how long the server keeps an idle connection open for its next request. Behind a reverse proxy of your own (Caddy, nginx, a load balancer), set it above the proxy's idle timeout, or set the proxy's below it: otherwise the proxy can send a request on a connection as the server closes it, and answers with a 502. Caddy keeps idle connections for 2 minutes by default, so `PI_POCKET_KEEPALIVE_SECONDS=125`, or `keepalive 4s` in Caddy's `transport http` block.
-
-> [!WARNING]
-> Anyone who can steer a session can make Pi run commands on this machine, as you. That reaches your files, Pi Pocket's own settings and tokens, and its code. Invite only people you would trust at your keyboard. View-only users cannot make Pi act. [SECURITY.md](SECURITY.md) says what is protected and what is not.
-
-## Documentation
-
-- [Feature tour](docs/features.md): every feature, in full.
-- [Docs site](https://tannermidd.github.io/pi-pocket/docs/): customizing Pi without code, and writing extensions.
-- [Engineering](https://tannermidd.github.io/pi-pocket/engineering.html) and [code map](docs/map.md): how Pi Pocket is built.
-
-## Development
-
-```bash
-npm run check   # type-check
-npm test        # server tests with a scripted model
-npm run format  # ESLint's layout fixes, then Prettier
-npm run lint    # check the layout rules
-```
-
-`web/` changes reload every open browser, and extensions reload into the running server. `node test/serve.ts` runs a throwaway copy to check a change on. [AGENTS.md](AGENTS.md) covers editing Pi Pocket safely from inside itself, and [CONTRIBUTING.md](CONTRIBUTING.md) how to send a change.
-
-## Limitations
-
-- Pi Durable is experimental, and its API can change between releases. Versions are pinned in `package.json`.
-- Only one server process can use the database at a time.
-- Pi's own extensions are not supported. Pi Pocket runs its own, on Pi Durable.
-- A git worktree keeps a session's files apart; it is not a sandbox.
-- The built-in browser needs Chromium, Chrome, Brave, or Edge on the server. It is tested on Linux and macOS.
-
-The [full list](docs/features.md#limitations) has the details.
-
-## Credits and license
-
-Inspired by [Mario Zechner's demo](https://x.com/badlogicgames/status/2106452296087302173) of his own Pi app. Pi Pocket is an independent project, not affiliated with Earendil. The bundled fonts keep their own licenses, which are beside them in [web/fonts/](web/fonts/). Dependencies keep their own licenses too; one is not MIT: HEIC photos are decoded with [libheif-js](https://github.com/catdad-experiments/libheif-js) (LGPL-3.0), installed as an ordinary npm package that you can replace.
-
-[MIT](LICENSE). To report a security problem, see [SECURITY.md](SECURITY.md).
+MIT。感谢上游 [@TannerMidd](https://github.com/TannerMidd) 的出色工作 / Thanks to [@TannerMidd](https://github.com/TannerMidd) for the excellent work this stands on.
