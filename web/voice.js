@@ -3,7 +3,7 @@
 // to Google's servers to be recognised; Safari on iOS has it too; Firefox has none, and there the mic does not show.
 import { useEffect, useRef, useState } from "preact/hooks";
 import { notify, store } from "./store.js";
-import { html, Icon } from "./ui.js";
+import { html, Icon, Spinner } from "./ui.js";
 
 /** The browser's recognizer, looked up when used (so a page can stand one in), or undefined where there is none. */
 const Recognizer = () => globalThis.SpeechRecognition ?? globalThis.webkitSpeechRecognition;
@@ -538,12 +538,19 @@ export function useVoiceMessage(onRecording) {
                         track.stop();
                     }
 
-                    setState("idle");
-
                     if (send && chunks.some((chunk) => chunk.size > 0)) {
-                        hear.current(new Blob(chunks, { type: mime.split(";")[0] }));
-                    } else if (send) {
-                        notify("info", "The recording came out empty. Tap the mic and try again.");
+                        // The recording goes out: the mic shows it going until it has.
+                        setState("sending");
+
+                        Promise.resolve(hear.current(new Blob(chunks, { type: mime.split(";")[0] })))
+                            .catch(() => {})
+                            .finally(() => setState("idle"));
+                    } else {
+                        setState("idle");
+
+                        if (send) {
+                            notify("info", "The recording came out empty. Tap the mic and try again.");
+                        }
                     }
                 };
 
@@ -631,6 +638,7 @@ const voiceClock = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 
 export function VoiceButton({ voice, class: className = "", size = 17, part, disabled = false }) {
     const { state, began } = voice;
     const recording = state === "recording";
+    const sending = state === "sending";
     const [, tick] = useState(0);
 
     useEffect(() => {
@@ -654,14 +662,16 @@ export function VoiceButton({ voice, class: className = "", size = 17, part, dis
             type="button"
             class=${`icon-button mic-button ${recording ? "listening" : ""} ${className}`}
             data-part=${part}
-            aria-label="Voice message"
+            aria-label=${sending ? "Sending the voice message" : "Voice message"}
             aria-pressed=${recording ? "true" : "false"}
-            title=${recording ? "Recording: tap to send" : "Record a voice message"}
-            disabled=${disabled}
+            title=${
+                recording ? "Recording: tap to send" : sending ? "Sending the recording…" : "Record a voice message"
+            }
+            disabled=${disabled || sending}
             onMouseDown=${(event) => event.preventDefault()}
             onClick=${voice.toggle}
         >
-            <${Icon} name="mic" size=${size} />
+            ${sending ? html`<${Spinner} hidden=${true} />` : html`<${Icon} name="mic" size=${size} />`}
         </button>
         ${
             recording &&

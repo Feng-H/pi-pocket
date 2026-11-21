@@ -1423,7 +1423,7 @@ export function Composer() {
         }
     };
 
-    const voice = useVoiceMessage((blob) => void sendVoice(blob));
+    const voice = useVoiceMessage((blob) => sendVoice(blob));
 
     const send = async (other = false) => {
         if (!canSend) {
