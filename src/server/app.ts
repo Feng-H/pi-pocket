@@ -7,6 +7,7 @@
  * `alerts.ts`, provider sign-ins in `providers.ts`, and each conversation's shared live view in `room.ts`.
  */
 import { createRequire } from "node:module";
+import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
@@ -994,6 +995,9 @@ export class PocketApp {
             browsers: this.browsers,
             pip: this.pip,
             pipCompaction: this.pipCompaction,
+            channels: {
+                post: (from, channel, message) => this.postToChannel(from, channel, message),
+            },
             history: {
                 search: (conversationId, query, scope, limit) =>
                     this.searchHistory(conversationId, query, scope, limit),
@@ -3060,6 +3064,56 @@ export class PocketApp {
             `${found.length} match${found.length === 1 ? "" : "es"} for ${JSON.stringify(query)} (read ${walked} entries of ${where}; entry ids are stable, timestamps are server time):`,
             ...found,
         ].join("\n");
+    }
+
+    /**
+     * A message posted into another channel (the channel_post tool): it arrives there as a message from this
+     * conversation's person, marked with where it came from, and that channel's Pi reads it and answers there.
+     */
+    async postToChannel(
+        fromId: ConversationId,
+        channel: string,
+        message: string,
+    ): Promise<string> {
+        const said = message.trim();
+
+        if (said === "") {
+            throw new HttpError(400, "Say what to post.");
+        }
+
+        const asked = channel.trim().replace(/^#/, "").toLowerCase();
+        const live = this.sessions().filter((session) => session.channel === true);
+        const target =
+            live.find((session) => (session.title ?? "").toLowerCase() === asked) ??
+            live.find((session) => (session.title ?? "").toLowerCase().includes(asked));
+
+        if (target === undefined) {
+            throw new HttpError(404, `No live channel called ${asked} is here.`);
+        }
+
+        const id = Number(target.id) as ConversationId;
+
+        if (id === fromId) {
+            throw new HttpError(400, "That is this very conversation: just say it here.");
+        }
+
+        const user = this.config.userById(this.sessionMeta(fromId)?.createdBy ?? "");
+
+        if (user === undefined) {
+            throw new HttpError(403, "The posting conversation's person is gone.");
+        }
+
+        this.requireSee(user, id);
+        this.requireSteer(user);
+
+        await this.commands.submit(
+            id,
+            user,
+            { text: said, requestId: randomUUID() },
+            `channel #${target.title ?? asked}`,
+        );
+
+        return `Posted into #${target.title ?? asked} (session ${String(target.id)}). Its Pi reads it there and answers in that channel.`;
     }
 
     /**

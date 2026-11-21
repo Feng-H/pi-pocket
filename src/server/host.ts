@@ -657,6 +657,10 @@ export interface PocketHost {
     >;
     /** PiP's compactions: its extension's hook has PiP write its own summaries. */
     readonly pipCompaction: Pick<PipCompaction, "summarize">;
+    /** Posting a message into another channel, for the channel_post tool (`extensions/channels.ts`). */
+    readonly channels: {
+        post(from: ConversationId, channel: string, message: string): Promise<string>;
+    };
     /** The archive cabinet: the original entries behind a summary, for the search_history tool (`extensions/history.ts`). */
     readonly history: {
         search(

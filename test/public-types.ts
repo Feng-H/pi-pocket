@@ -70,6 +70,7 @@ type Internal =
     | "pip"
     | "pipCompaction"
     | "history"
+    | "channels"
     | "gallery"
     | "updates"
     | "watches"
