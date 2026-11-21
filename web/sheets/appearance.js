@@ -33,6 +33,7 @@ import {
 } from "../theme.js";
 import { arranged, move, resetSlot, setShown, SLOTS } from "../slots.js";
 import { html, Icon, Sheet, Switch } from "../ui.js";
+import { t } from "../i18n.js";
 import { pipAvailable } from "../pip.js";
 import { QUOTE_STYLES, quoteStyleOf } from "../quote-box.js";
 import { galleryAvailable } from "./gallery.js";
@@ -241,11 +242,11 @@ function LookTools() {
                             class="button"
                             onClick=${() => openSheet({ type: "gallery-share", id, theme: true })}
                         >
-                            Share…
+                            {t("Share…")}
                         </button>`
                     }
-                    <button class="button ghost" onClick=${remove}>Remove</button>`
-                : html`<span class="muted small">Duplicate it to make a theme of your own.</span>`
+                    <button class="button ghost" onClick=${remove}>${t("Remove")}</button>`
+                : html`<span class="muted small">{t("Duplicate it to make a theme of your own.")}</span>`
         }
     </div>`;
 }
@@ -478,7 +479,7 @@ function ColorsTools() {
             html`<button class="button" onClick=${() => attempt(() => editWithPi(own.id))}>
                     <${Icon} name="sparkle" size=${14} /> Edit with Pi
                 </button>
-                <button class="button ghost" onClick=${remove}>Remove</button>`
+                <button class="button ghost" onClick=${remove}>${t("Remove")}</button>`
         }
     </div>`;
 }
@@ -527,7 +528,7 @@ function DefaultTools() {
                 Use these for new browsers
             </button>`
         }
-        ${current && html`<button class="button ghost" onClick=${() => set(null)}>Reset</button>`}
+        ${current && html`<button class="button ghost" onClick=${() => set(null)}>${t("Reset")}</button>`}
     </div>`;
 }
 
@@ -566,11 +567,11 @@ function SlotLayout({ slot }) {
     const changed = Object.keys(prefs().layout?.[slot] ?? {}).length > 0;
 
     return html`<div class="label slot-label">
-            <span>${SLOTS[slot].label}</span>
+            <span>${t(SLOTS[slot].label)}</span>
             ${
                 changed &&
                 html`<button class="button ghost small" onClick=${() => resetSlot(slot)}>
-                    Reset
+                    ${t("Reset")}
                 </button>`
             }
         </div>
@@ -623,14 +624,14 @@ export function AppearanceSheet() {
 
     useEffect(() => () => preview(null), []);
 
-    return html`<${Sheet} title="Appearance" onClose=${closeSheet} wide=${true}>
-        <div class="label">Theme</div>
+    return html`<${Sheet} title={t("Appearance")} onClose=${closeSheet} wide=${true}>
+        <div class="label">${t("Theme")}</div>
         <div class="look-grid">
             ${lookIds().map((id) => html`<${LookCard} key=${id} id=${id} />`)}
         </div>
         ${store.state.me?.role === "owner" && html`<${LookTools} />`}
         ${store.state.me?.role === "owner" && html`<${FontTools} />`}
-        <div class="label">Colors</div>
+        <div class="label">${t("Colors")}</div>
         <div class="theme-grid">
             ${desktop && html`<${ThemeCard} id="desktop" desktop=${true} />`}
             ${[...themeIds(), ...folderPaletteIds()].map(
@@ -645,44 +646,44 @@ export function AppearanceSheet() {
                 Running Pi Pocket on an Omarchy desktop adds “Desktop”: the app follows the theme the desktop uses.
             </p>`
         }
-        <div class="label">Layout and motion</div>
+        <div class="label">${t("Layout and motion")}</div>
         <div class="sheet-list">
             <${SettingRow}
-                title="Tiled windows"
-                detail="Wide screens: the sidebar and the session as Hyprland windows, with gaps and the active border"
+                title={t("Tiled windows")}
+                detail={t("Wide screens: the sidebar and the session as Hyprland windows, with gaps and the active border")}
             >
                 <${Switch}
                     on=${p.tiling}
-                    label="Tiled windows"
+                    label={t("Tiled windows")}
                     onChange=${() => setPrefs({ tiling: !p.tiling })}
                 />
             <//>
             <${SettingRow}
-                title="Peek tiles"
-                detail=${`Other sessions beside this one, live while on screen: working, waiting for you, done since you looked, and pinned. Also the tiles button in the top bar${touch ? "" : ", or Alt+P"}`}
+                title={t("Peek tiles")}
+                detail=${t(`Other sessions beside this one, live while on screen: working, waiting for you, done since you looked, and pinned. Also the tiles button in the top bar`, touch ? "" : ", or Alt+P")}
             >
                 <${Switch}
                     on=${p.peeks}
-                    label="Peek tiles"
+                    label={t("Peek tiles")}
                     onChange=${() => setPrefs({ peeks: !p.peeks })}
                 />
             <//>
             ${
                 desktop?.wallpaper &&
                 html`<${SettingRow}
-                    title="Desktop wallpaper"
-                    detail="Your wallpaper in the gaps between windows, while following the desktop"
+                    title={t("Desktop wallpaper")}
+                    detail={t("Your wallpaper in the gaps between windows, while following the desktop")}
                 >
                     <${Switch}
                         on=${p.wallpaper}
                         disabled=${!p.tiling || p.theme !== "desktop"}
-                        label="Desktop wallpaper"
+                        label={t("Desktop wallpaper")}
                         onChange=${() => setPrefs({ wallpaper: !p.wallpaper })}
                     />
                 <//>`
             }
             <${SettingRow}
-                title="Switch sessions with"
+                title={t("Switch sessions with")}
                 detail="Tabs: a strip above the session, one segment for each of the first nine sessions. Choosing Tabs folds the sidebar to its rail, and Sidebar unfolds it"
             >
                 <div class="segmented">
@@ -707,8 +708,8 @@ export function AppearanceSheet() {
                 </div>
             <//>
             <${SettingRow}
-                title="Sidebar"
-                detail="Folded, it shows numbered sessions like workspaces"
+                title={t("Sidebar")}
+                detail={t("Folded, it shows numbered sessions like workspaces")}
             >
                 <div class="segmented">
                     ${[
@@ -729,7 +730,7 @@ export function AppearanceSheet() {
             ${
                 pipAvailable() &&
                 html`<${SettingRow}
-                    title="PiP"
+                    title={t("PiP")}
                     detail="Floating: a window in the corner, or a sheet on a phone. Board: its conversation in the session's place, with every step and its menu"
                 >
                     <div class="segmented">
@@ -750,7 +751,7 @@ export function AppearanceSheet() {
                 <//>`
             }
             <${SettingRow}
-                title="Motion"
+                title={t("Motion")}
                 detail="Auto follows your system's reduced-motion setting. Fluid adds springs, staggered entrances, and layout changes that morph"
             >
                 <div class="segmented">
@@ -772,14 +773,14 @@ export function AppearanceSheet() {
                 </div>
             <//>
             <${SettingRow}
-                title="Text size"
-                detail=${`The conversation's, in pixels: any from ${MIN_TEXT} to ${MAX_TEXT}`}
+                title={t("Text size")}
+                detail=${t("The conversation's, in pixels: any from $ to $", MIN_TEXT, MAX_TEXT)}
             >
                 <${TextSize} size=${textSizeOf(p.text)} />
             <//>
             <${SettingRow}
-                title="Width"
-                detail="Wide screens: how much of the window the conversation and the message box take. Comfortable grows with the window"
+                title={t("Width")}
+                detail={t("Wide screens: how much of the window the conversation and the message box take. Comfortable grows with the window")}
             >
                 <div class="segmented">
                     ${[
@@ -799,8 +800,8 @@ export function AppearanceSheet() {
                 </div>
             <//>
             <${SettingRow}
-                title="Density"
-                detail="Less room around messages, rows, and the message box, to fit more on a screen"
+                title={t("Density")}
+                detail={t("Less room around messages, rows, and the message box, to fit more on a screen")}
             >
                 <div class="segmented">
                     ${[
@@ -820,42 +821,42 @@ export function AppearanceSheet() {
                 </div>
             <//>
         </div>
-        <div class="label">Conversation</div>
+        <div class="label">${t("Conversation")}</div>
         <div class="sheet-list">
             <${SettingRow}
-                title="Show thinking"
-                detail=${`Shows Pi's current thought above the live line as it comes, and its finished thoughts. The chevron before the line folds the live one${touch ? "" : ". Also Alt+T"}`}
+                title={t("Show thinking")}
+                detail=${t(`Shows Pi's current thought above the live line as it comes, and its finished thoughts. The chevron before the line folds the live one`, touch ? "" : ". Also Alt+T")}
             >
                 <${Switch}
                     on=${p.showThinking}
-                    label="Show thinking"
+                    label={t("Show thinking")}
                     onChange=${() => setPrefs({ showThinking: !p.showThinking })}
                 />
             <//>
             <${SettingRow}
-                title="Keep activity folded"
-                detail="Pi's thinking and tool calls stay on their one line until you open them, also while it works and in the newest turn"
+                title={t("Keep activity folded")}
+                detail={t("Pi's thinking and tool calls stay on their one line until you open them, also while it works and in the newest turn")}
             >
                 <${Switch}
                     on=${p.foldActivity}
-                    label="Keep activity folded"
+                    label={t("Keep activity folded")}
                     onChange=${() => setPrefs({ foldActivity: !p.foldActivity })}
                 />
             <//>
             <${SettingRow}
-                title="Reply to a passage"
-                detail="Select words in one of Pi's replies, and a Reply button by them quotes them in your next message"
+                title={t("Reply to a passage")}
+                detail={t("Select words in one of Pi's replies, and a Reply button by them quotes them in your next message")}
             >
                 <${Switch}
                     on=${p.quoteReply}
-                    label="Reply to a passage"
+                    label={t("Reply to a passage")}
                     onChange=${() => setPrefs({ quoteReply: !p.quoteReply })}
                 />
             <//>
             ${
                 p.quoteReply &&
                 html`<${SettingRow}
-                    title="Quotes in the message box"
+                    title={t("Quotes in the message box")}
                     detail="How a passage you reply to shows. In the box, with your words: Fade, a tint that fades out to the right; Tint, a soft block; Ghost, faded words only. Separate: each in a strip over the box, sent first"
                 >
                     <div class="segmented">
@@ -875,36 +876,36 @@ export function AppearanceSheet() {
             ${
                 pipAvailable() &&
                 html`<${SettingRow}
-                    title="Ask PiP about a passage"
-                    detail="Select words in one of Pi's replies, and PiP's orb by them asks PiP about them, and tells it which session they came from"
+                    title={t("Ask PiP about a passage")}
+                    detail={t("Select words in one of Pi's replies, and PiP's orb by them asks PiP about them, and tells it which session they came from")}
                 >
                     <${Switch}
                         on=${p.askPipQuote}
-                        label="Ask PiP about a passage"
+                        label={t("Ask PiP about a passage")}
                         onChange=${() => setPrefs({ askPipQuote: !p.askPipQuote })}
                     />
                 <//>`
             }
             <${SettingRow}
-                title="Wait for updates"
+                title={t("Wait for updates")}
                 detail="Going back to a session that changed while you were away: show it once its updates have come, instead of your last copy at once with the updates sliding in"
             >
                 <${Switch}
                     on=${p.waitForUpdates}
-                    label="Wait for updates"
+                    label={t("Wait for updates")}
                     onChange=${() => setPrefs({ waitForUpdates: !p.waitForUpdates })}
                 />
             <//>
         </div>
-        <div class="label">Status line</div>
+        <div class="label">${t("Status line")}</div>
         <div class="sheet-list">
             <${SettingRow}
-                title="Reply speed"
-                detail="Under the message box: how fast the last answer came, in tokens a second, and how long its first token took"
+                title={t("Reply speed")}
+                detail={t("Under the message box: how fast the last answer came, in tokens a second, and how long its first token took")}
             >
                 <${Switch}
                     on=${p.speed}
-                    label="Reply speed"
+                    label={t("Reply speed")}
                     onChange=${() => setPrefs({ speed: !p.speed })}
                 />
             <//>
@@ -916,7 +917,7 @@ export function AppearanceSheet() {
                 class="button ghost wide sheet-footer"
                 onClick=${() => openSheet({ type: "shortcuts" })}
             >
-                <${Icon} name="keyboard" size=${16} /> Keyboard shortcuts
+                <${Icon} name="keyboard" size=${16} /> ${t("Keyboard shortcuts")}
             </button>`
         }
     <//>`;

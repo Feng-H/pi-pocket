@@ -260,6 +260,78 @@ const WORDS = {
         "browse and install drop-ins": "浏览并安装扩展",
         "People and invites": "成员与邀请",
         "New session in $": "在 $ 新建会话",
+        "New channel": "新建频道",
+        "Channel name": "频道名称",
+        Create: "创建",
+        "Channel # $ is new; the agent answers here.": "频道 #$ 已创建,Agent 会在这里自动回复。",
+        // 外观设置。
+        Appearance: "外观",
+        Theme: "主题",
+        Colors: "颜色",
+        "Layout and motion": "布局与动效",
+        Conversation: "对话",
+        "Status line": "状态栏",
+        "Tiled windows": "平铺窗口",
+        "Wide screens: the sidebar and the session as Hyprland windows, with gaps and the active border":
+            "宽屏:侧栏和会话作为 Hyprland 窗口,带间隙和活动边框",
+        "Peek tiles": "速览磁贴",
+        "Other sessions beside this one, live while on screen: working, waiting for you, done since you looked, and pinned. Also the tiles button in the top bar":
+            "在这一屏旁边实时显示其他会话:工作中、等你处理、你看后有更新、已置顶。也在顶栏的磁贴按钮$",
+        "Desktop wallpaper": "桌面壁纸",
+        "Your wallpaper in the gaps between windows, while following the desktop": "跟随桌面时,窗口间隙里显示你的壁纸",
+        "Switch sessions with": "切换会话的方式",
+        "Tabs: a strip above the session, one segment for each of the first nine sessions. Choosing Tabs folds the sidebar to its rail, and Sidebar unfolds it":
+            "标签页:会话上方的一条,前九个会话各占一段。选标签页会把侧栏收成竖条,选侧栏则展开",
+        Tabs: "标签页",
+        Folded: "收起",
+        "Floating: a window in the corner, or a sheet on a phone. Board: its conversation in the session's place, with every step and its menu":
+            "悬浮:角落的小窗,手机上是抽屉。面板:占据会话位置的完整对话,含全部步骤和菜单",
+        Floating: "悬浮",
+        Board: "面板",
+        Motion: "动效",
+        "Auto follows your system's reduced-motion setting. Fluid adds springs, staggered entrances, and layout changes that morph":
+            "自动:跟随系统的减弱动态设置。完全:完整动效;灵动:弹性、错峰入场和形变布局;减弱:尽量少动",
+        Auto: "自动",
+        Full: "完全",
+        Fluid: "灵动",
+        Reduced: "减弱",
+        "The conversation's, in pixels: any from $ to $": "对话的字号,以像素计:$ 到 $ 之间任意",
+        Width: "宽度",
+        "Wide screens: how much of the window the conversation and the message box take. Comfortable grows with the window":
+            "宽屏:对话和输入框占窗口多少。舒适随窗口变宽",
+        Comfortable: "舒适",
+        Wide: "宽",
+        Density: "密度",
+        Compact: "紧凑",
+        Tight: "极简",
+        "Less room around messages, rows, and the message box, to fit more on a screen":
+            "消息、列表行、输入框周围的留白更少,一屏装下更多",
+        "Keep activity folded": "折叠活动记录",
+        "Pi's thinking and tool calls stay on their one line until you open them, also while it works and in the newest turn":
+            "Pi 的思考和工具调用保持在一行,点开才展开;运行中和最新一轮也是如此",
+        "Reply to a passage": "划词回复",
+        "Select words in one of Pi's replies, and a Reply button by them quotes them in your next message":
+            "选中 Pi 回复里的文字,旁边的回复按钮会把它们引用到你的下一条消息里",
+        "Quotes in the message box": "输入框中的引用",
+        "How a passage you reply to shows. In the box, with your words: Fade, a tint that fades out to the right; Tint, a soft block; Ghost, faded words only. Separate: each in a strip over the box, sent first":
+            "划词引用的显示方式。框内与你的文字一起:淡出(向右渐隐的底色)、色块、淡字。分开:每条引用单独成条在输入框上方,发送时排在最前",
+        Fade: "淡出",
+        Tint: "色块",
+        Ghost: "淡字",
+        Separate: "分开",
+        "Ask PiP about a passage": "划词问 PiP",
+        "Select words in one of Pi's replies, and PiP's orb by them asks PiP about them, and tells it which session they came from":
+            "选中 Pi 回复里的文字,旁边的 PiP 按钮就会向 PiP 提问,并告诉它这段话出自哪个会话",
+        "Wait for updates": "等待更新",
+        "Going back to a session that changed while you were away: show it once its updates have come, instead of your last copy at once with the updates sliding in":
+            "回到离开期间有变化的会话:等更新到达再显示,而不是先显示旧内容再滑入更新",
+        "Reply speed": "回复速度",
+        "Under the message box: how fast the last answer came, in tokens a second, and how long its first token took":
+            "输入框下方:上一条回答的速度(每秒 token 数)和首字延迟",
+        Reset: "重置",
+        "Share…": "分享…",
+        Remove: "移除",
+        "Duplicate it to make a theme of your own.": "复制一份,做成你自己的主题。",
         // 侧栏(rail、选择条、行内操作、待批准卡片)。
         "Sessions and tools": "会话与工具",
         "Sessions, $ need you": "会话,$ 个等你处理",

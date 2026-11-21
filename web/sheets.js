@@ -300,6 +300,20 @@ function sheetBody(sheet) {
             break;
         }
 
+        case "text":
+            // A sheet one part opens with its own words in: the fields travel with the request.
+            body = html`<${TextSheet}
+                title=${sheet.title}
+                label=${sheet.label}
+                hint=${sheet.hint}
+                initial=${sheet.initial}
+                placeholder=${sheet.placeholder}
+                button=${sheet.button}
+                multiline=${sheet.multiline}
+                submit=${sheet.submit}
+            />`;
+            break;
+
         case "worktree":
             body = html`<${WorktreeSheet} />`;
             break;

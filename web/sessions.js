@@ -2384,6 +2384,40 @@ function AllSessions({ compact = false }) {
                             run: () => markRead(group.rows.map((row) => row.session)),
                         }
                       : undefined;
+            // The channels' +: a new channel, named in a sheet, starting where the last one lives.
+            const addChannel =
+                group.kind === "channels" &&
+                canSteer() && {
+                    title: t("New channel"),
+                    run: () =>
+                        openSheet({
+                            type: "text",
+                            title: t("New channel"),
+                            label: t("Channel name"),
+                            placeholder: "general",
+                            button: t("Create"),
+                            submit: async (name) => {
+                                const said = name.trim().replace(/^#/, "");
+
+                                if (said === "") {
+                                    return;
+                                }
+
+                                const cwd =
+                                    group.rows.at(-1)?.session.cwd ??
+                                    sessions.find((each) => each.id === markedOpen())?.cwd ??
+                                    server?.home ??
+                                    "/tmp";
+                                const created = await actions.createSession(cwd, {
+                                    channel: true,
+                                    title: said,
+                                });
+
+                                navigate(created.id);
+                                notify("info", t("Channel # $ is new; the agent answers here.", said));
+                            },
+                        }),
+                };
             // A folded group hides its rows' marks: say when one waits for you or its run failed.
             const trouble = folded
                 ? group.hidden
@@ -2431,16 +2465,31 @@ function AllSessions({ compact = false }) {
                 key=${`${view}:${tab}:${group.key}`}
             >
                 ${
-                    action
+                    action || addChannel
                         ? html`<div class="group-bar" data-part="session-group-bar">
                             ${head}
-                            <button
-                                class="group-action"
-                                data-part="session-group-action"
-                                onClick=${action.run}
-                            >
-                                ${action.label}
-                            </button>
+                            ${
+                                action &&
+                                html`<button
+                                    class="group-action"
+                                    data-part="session-group-action"
+                                    onClick=${action.run}
+                                >
+                                    ${action.label}
+                                </button>`
+                            }
+                            ${
+                                addChannel &&
+                                html`<button
+                                    class="group-add"
+                                    data-part="session-group-add"
+                                    title=${addChannel.title}
+                                    aria-label=${addChannel.title}
+                                    onClick=${addChannel.run}
+                                >
+                                    <${Icon} name="plus" size=${12} />
+                                </button>`
+                            }
                         </div>`
                         : head
                 }

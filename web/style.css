@@ -6661,6 +6661,26 @@ button.session-chip {
     min-width: 0;
 }
 
+/* The channels' +: a new channel, Discord-style, quiet until the cursor finds it. */
+.group-add {
+    flex: none;
+    margin-right: 6px;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    color: var(--faint);
+    transition: color var(--t-hover) var(--ease-out), background-color var(--t-hover) var(--ease-out);
+}
+
+@media (hover: hover) {
+    .group-add:hover {
+        color: var(--text);
+        background: var(--hover);
+    }
+}
+
 .group-head.attn .group-name {
     color: var(--warn);
 }
