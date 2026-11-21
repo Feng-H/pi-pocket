@@ -6,6 +6,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { statSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { basename, extname, join, sep } from "node:path";
 import type { Context } from "@earendil-works/chord/context";
 import { copyJson, type JsonValue } from "@earendil-works/chord/json";
@@ -66,6 +67,7 @@ import { attribute } from "./fence.ts";
 import { homePath } from "./paths.ts";
 import { forModel, MAX_INLINE_IMAGE, modelImage } from "./model-images.ts";
 import { mentionedPaths, viewFile } from "./files.ts";
+import { MAX_STT, sttConfigured, transcribeAudio } from "./stt.ts";
 import { isThinkingLevel, THINKING_LEVELS } from "./models.ts";
 import { writePiSession } from "./pi-sessions.ts";
 import { snippet } from "./projection.ts";
@@ -866,6 +868,11 @@ export class Commands {
             }
         });
 
+        // Voice messages: what an attached audio says, heard by the server's speech-to-text, becomes the message's
+        // words — the model reads them in place of listening, and the person sees what was heard in their own message.
+        const heard = await this.#heardAudio(id, attachments);
+        const said = heard === "" ? text : text === "" ? heard : `${text}\n${heard}`;
+
         const lines = attachments.map((file) => {
             const note = notes.get(file);
             const line = `- ${file.path} (${file.name}, ${file.mime || "unknown type"}, ${file.size} bytes)`;
@@ -874,7 +881,7 @@ export class Commands {
         });
         // The heading whole, with files alone too: what reads the message splits it there.
         const written =
-            lines.length === 0 ? text : `${text}${ATTACHMENTS_HEADING}${lines.join("\n")}`;
+            lines.length === 0 ? said : `${said}${ATTACHMENTS_HEADING}${lines.join("\n")}`;
         const body = this.messageText(
             user,
             via === undefined ? written : `[via ${via}] ${written}`,
@@ -973,10 +980,11 @@ export class Commands {
         const submission = (await app.harness.submission(submissionId, context))!;
 
         app.collab.setTyping(id, user, null);
-        // The title comes from the message as it was stored: without hidden values.
-        const titled = app.hidden.replace(typed, id);
+        // The title comes from the message as it was stored: without hidden values. A voice message's title comes
+        // from what its audio said, which is its words now.
+        const titled = app.hidden.replace(typed === "" ? said : typed, id);
 
-        await this.#touched(id, titled, text === titled ? undefined : text);
+        await this.#touched(id, titled, text === titled || text === "" ? undefined : text);
         this.#reportUnanswered(id, submission.wait(context));
 
         if (failure !== undefined) {
@@ -1000,6 +1008,36 @@ export class Commands {
 
     /** Submissions `message.sent` went out for lately: a retry that raced its first try finds its id here. */
     readonly #announced = new Set<string>();
+
+    /**
+     * What a message's attached audio says (`🎙 …`, one line each): the server's speech-to-text hears each, most
+     * recent last. An audio that cannot be heard leaves no line, and a warning goes to the session's notices.
+     */
+    async #heardAudio(id: ConversationId, attachments: Attachment[]): Promise<string> {
+        const audio = attachments.filter(
+            (file) => file.mime?.startsWith("audio/") === true && file.size <= MAX_STT,
+        );
+
+        if (audio.length === 0 || !sttConfigured()) {
+            return "";
+        }
+
+        const lines = await Promise.all(
+            audio.slice(0, 4).map(async (file) => {
+                try {
+                    const words = (await transcribeAudio(await readFile(file.path), file.mime)).trim();
+
+                    return words === "" ? undefined : `🎙 ${words}`;
+                } catch (error) {
+                    this.#app.notice("warning", `Could not transcribe ${file.name}: ${describe(error)}`, id);
+
+                    return undefined;
+                }
+            }),
+        );
+
+        return lines.filter(Boolean).join("\n");
+    }
 
     /** Whether to send `message.sent` for a submission: once only, as far as this process knows. */
     #announce(submissionId: unknown): boolean {

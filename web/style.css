@@ -5838,6 +5838,24 @@ pre.diff .del {
     }
 }
 
+/* A voice message recording: its clock before the mic, and the cross that drops it after. */
+.voice-live {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.voice-clock {
+    margin-right: 4px;
+    font: 12px var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+}
+
+.voice-cancel {
+    color: var(--muted);
+}
+
 /*
  * A row out of sight is not styled or laid out (`content-visibility`): with hundreds of sessions, each restyle and each
  * width change (the sidebar's drag, the window's) paid for every row. Meanwhile it keeps the size it last had, or its

@@ -54,7 +54,7 @@ import { TrustBar } from "./trust.js";
 import { prefs } from "./theme.js";
 import { fingerprint } from "./text-hash.js";
 import { says } from "./turns.js";
-import { MicButton, useDictation } from "./voice.js";
+import { MicButton, VoiceButton, useDictation, useVoiceMessage, voiceRecording } from "./voice.js";
 import {
     APPLE,
     contextLevel,
@@ -929,6 +929,8 @@ export function Composer() {
     // The message on its way from here (`onTheWay`): the box holds it, read only, until it went.
     const going = onTheWay.get(conversationId);
     const sending = going !== undefined;
+    // The mic records a voice message when the server hears audio (`stt`); otherwise it dictates where it can.
+    const voiceLive = voiceRecording() && (store.state.me?.stt ?? false);
     // How Reply's quotes show (Appearance): in the box's text, drawn as Fade, Tint, or Ghost; or in strips over it.
     const quoteStyle = quoteStyleOf(prefs());
 
@@ -1386,6 +1388,43 @@ export function Composer() {
     };
 
     // `other`: Ctrl/⌘+Enter, which sends the other way round (Steer and Queue swap; Interrupt stays).
+    // A voice message sends the recording on its own: nothing typed, the audio as its attachment, straight out. The
+    // server hears what it says, and the words land in the conversation as the message.
+    const sendVoice = async (blob) => {
+        const file = new File(
+            [blob],
+            blob.type.includes("mp4") ? "voice-message.m4a" : "voice-message.webm",
+            { type: blob.type },
+        );
+        const attachment = await attempt(() => actions.upload(file));
+
+        if (!attachment) {
+            return;
+        }
+
+        const record = beginSend(
+            conversationId,
+            { text: "", strips: [], files: [attachment.path] },
+            ["message", "", [attachment.path]],
+        );
+
+        if (!record) {
+            return;
+        }
+
+        const ok = await attempt(() =>
+            actions.submit("", [attachment], busy ? sendMode : "followUp", false, record.requestId),
+        );
+
+        endSend(conversationId, record, Boolean(ok));
+
+        if (ok && !coarse) {
+            box.current?.focus();
+        }
+    };
+
+    const voice = useVoiceMessage((blob) => void sendVoice(blob));
+
     const send = async (other = false) => {
         if (!canSend) {
             return;
@@ -1407,6 +1446,7 @@ export function Composer() {
 
         // What shows is what goes: words still coming would land in the emptied box.
         dictation.stop(true);
+        voice.cancel();
         // Each quote goes as a paragraph of its own, as written: a placeholder in one is the passage's words.
         const full = messageText(text, quoted, (words) => expandPastes(words, pastes));
 
@@ -2485,12 +2525,21 @@ export function Composer() {
                             </div>`
                         }
                         ${busy && html`<${ModePick} mode=${sendMode} onPick=${setSendMode} />`}
-                        <${MicButton}
-                            dictation=${dictation}
-                            class="composer-mic"
-                            part="composer-button"
-                            disabled=${sending}
-                        />
+                        ${
+                            voiceLive
+                                ? html`<${VoiceButton}
+                                        voice=${voice}
+                                        class="composer-mic"
+                                        part="composer-button"
+                                        disabled=${sending}
+                                    />`
+                                : html`<${MicButton}
+                                        dictation=${dictation}
+                                        class="composer-mic"
+                                        part="composer-button"
+                                        disabled=${sending}
+                                    />`
+                        }
                         <button
                             class=${`send-button ${canSend ? "ready" : ""}`}
                             data-part="send-button"

@@ -488,3 +488,165 @@ export function MicButton({ dictation, class: className = "", size = 17, part, d
         <${Icon} name="mic" size=${size} />
     </button>`;
 }
+
+/**
+ * A voice message records: `toggle` starts, and the next tap ends the recording and hands it to `onRecording` to send;
+ * `cancel` drops it. The tab going out of sight drops a recording under way. Whether this browser can record at all
+ * (`MediaRecorder` and the microphone on a page given to it) says `voiceRecording`.
+ */
+export const voiceRecording = () =>
+    globalThis.isSecureContext !== false &&
+    typeof MediaRecorder === "function" &&
+    navigator.mediaDevices !== undefined;
+
+export function useVoiceMessage(onRecording) {
+    const [state, setState] = useState("idle"); // A recording under way, or not.
+    const [began, setBegan] = useState(0); // When the recording began, for the time beside its mic.
+    const hear = useRef(onRecording);
+    const self = useRef(null);
+
+    hear.current = onRecording;
+
+    if (self.current === null) {
+        self.current = {
+            recorder: null,
+            /** End the recording: `send` hands it on, anything else drops it. */
+            stop(send) {
+                const recorder = this.recorder;
+
+                if (!recorder) {
+                    return;
+                }
+
+                if (!send) {
+                    this.recorder = null;
+                }
+
+                recorder.stop();
+            },
+            start() {
+                const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((each) =>
+                    MediaRecorder.isTypeSupported(each),
+                );
+
+                if (mime === undefined) {
+                    notify("error", "This browser cannot record audio for a voice message.");
+
+                    return;
+                }
+
+                navigator.mediaDevices
+                    .getUserMedia({ audio: true })
+                    .then((stream) => {
+                        const recorder = new MediaRecorder(stream, { mimeType: mime });
+                        const chunks = [];
+
+                        recorder.ondataavailable = (event) => {
+                            if (event.data.size > 0) {
+                                chunks.push(event.data);
+                            }
+                        };
+
+                        recorder.onstop = () => {
+                            stream.getTracks().forEach((track) => track.stop());
+
+                            // A cancel left this recorder behind: the recording goes no further.
+                            if (this.recorder !== recorder) {
+                                return;
+                            }
+
+                            this.recorder = null;
+                            setState("idle");
+
+                            hear.current(new Blob(chunks, { type: mime.split(";")[0] }));
+                        };
+
+                        this.recorder = recorder;
+                        recorder.start();
+                        setBegan(Date.now());
+                        setState("recording");
+                    })
+                    .catch(() => {
+                        notify("error", "No microphone found, or its use is blocked for this site.");
+                    });
+            },
+        };
+    }
+
+    useEffect(() => {
+        const hidden = () => document.hidden && self.current.stop(false);
+
+        document.addEventListener("visibilitychange", hidden);
+
+        return () => {
+            document.removeEventListener("visibilitychange", hidden);
+            self.current.stop(false);
+        };
+    }, []);
+
+    return {
+        state,
+        began,
+        toggle: () => (self.current.recorder ? self.current.stop(true) : self.current.start()),
+        cancel: () => self.current.stop(false),
+    };
+}
+
+/** A recording's clock reads seconds as m:ss. */
+const voiceClock = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+
+/**
+ * The voice message's mic: starts a recording, and while it records, ends it and sends it. While it records, the
+ * time it has been going stands before it, and a cross behind it drops the recording.
+ */
+export function VoiceButton({ voice, class: className = "", size = 17, part, disabled = false }) {
+    const { state, began } = voice;
+    const recording = state === "recording";
+    const [, tick] = useState(0);
+
+    useEffect(() => {
+        if (!recording) {
+            return;
+        }
+
+        const timer = setInterval(() => tick((each) => each + 1), 1000);
+
+        return () => clearInterval(timer);
+    }, [recording]);
+
+    return html`<span class="voice-live">
+        ${
+            recording &&
+            html`<span class="voice-clock" aria-hidden="true">
+                ${voiceClock(Math.max(0, Math.floor((Date.now() - began) / 1000)))}
+            </span>`
+        }
+        <button
+            type="button"
+            class=${`icon-button mic-button ${recording ? "listening" : ""} ${className}`}
+            data-part=${part}
+            aria-label="Voice message"
+            aria-pressed=${recording ? "true" : "false"}
+            title=${recording ? "Recording: tap to send" : "Record a voice message"}
+            disabled=${disabled}
+            onMouseDown=${(event) => event.preventDefault()}
+            onClick=${voice.toggle}
+        >
+            <${Icon} name="mic" size=${size} />
+        </button>
+        ${
+            recording &&
+            html`<button
+                type="button"
+                class="icon-button voice-cancel"
+                aria-label="Drop the recording"
+                title="Drop the recording"
+                disabled=${disabled}
+                onMouseDown=${(event) => event.preventDefault()}
+                onClick=${voice.cancel}
+            >
+                <${Icon} name="close" size=${14} />
+            </button>`
+        }
+    </span>`;
+}
