@@ -270,8 +270,8 @@ export function ModelPicker() {
                         html`<span
                             class="model-scope"
                             role="group"
-                            aria-label={t("Model scope")}
-                            title={t("Tab switches between scoped and all models")}
+                            aria-label=${t("Model scope")}
+                            title=${t("Tab switches between scoped and all models")}
                         >
                             <span aria-hidden="true">[</span>
                             <button
@@ -289,7 +289,7 @@ export function ModelPicker() {
                             <button
                                 class=${showAll ? "on" : ""}
                                 aria-pressed=${showAll}
-                                title={t("All models with a configured sign-in")}
+                                title=${t("All models with a configured sign-in")}
                                 onClick=${() => {
                                     setShowAll(true);
                                     setPicked(0);
@@ -311,7 +311,7 @@ export function ModelPicker() {
                     <${Icon} name="search" size=${15} />
                     <input
                         ref=${search}
-                        placeholder={t("Search models")}
+                        placeholder=${t("Search models")}
                         aria-keyshortcuts=${scopedModels.length > 0 ? "Tab" : undefined}
                         value=${query}
                         onInput=${(event) => {
@@ -323,7 +323,7 @@ export function ModelPicker() {
             }
             ${
                 favorites.size > 0 &&
-                html`<div class="segmented model-filters" role="group" aria-label={t("Filter models")}>
+                html`<div class="segmented model-filters" role="group" aria-label=${t("Filter models")}>
                     <button
                         class=${favoritesOnly ? "" : "on"}
                         aria-pressed=${!favoritesOnly}
@@ -346,7 +346,7 @@ export function ModelPicker() {
                     </button>
                 </div>`
             }
-            <div class="pop-menu-list" ref=${list} role="listbox" aria-label={t("Models")}>
+            <div class="pop-menu-list" ref=${list} role="listbox" aria-label=${t("Models")}>
                 ${
                     models.length === 0 &&
                     html`<p class="muted pop-menu-note">
@@ -434,7 +434,7 @@ export function ModelPicker() {
                                       </span>`
                                     : html`<button
                                           class="pop-menu-link"
-                                          title={t("New sessions start with this model and thinking level")}
+                                          title=${t("New sessions start with this model and thinking level")}
                                           onClick=${() => setDefault(agent.model, agent.thinkingLevel ?? "off")}
                                       >
                                           Make default

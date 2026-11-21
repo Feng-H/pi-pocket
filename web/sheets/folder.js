@@ -115,7 +115,7 @@ function LineInput({ value, placeholder, label, onSubmit, onCancel, class: class
         <button class="button small primary" type="submit" disabled=${text.trim() === ""}>
             OK
         </button>
-        <button class="icon-button" type="button" aria-label={t("Cancel")} onClick=${onCancel}>
+        <button class="icon-button" type="button" aria-label=${t("Cancel")} onClick=${onCancel}>
             <${Icon} name="close" size=${16} />
         </button>
     </form>`;
@@ -489,7 +489,7 @@ export function CwdSheet({ mode, fromList = false }) {
                           class="fp-path-input"
                           value=${editing}
                           placeholder="A path: ~/code or /srv"
-                          label={t("Go to a path")}
+                          label=${t("Go to a path")}
                           onSubmit=${goTo}
                           onCancel=${() => {
                               setEditing(null);
@@ -500,7 +500,7 @@ export function CwdSheet({ mode, fromList = false }) {
                           class="fp-crumbs"
                           ref=${crumbsBox}
                           onScroll=${(event) => markCut(event.currentTarget)}
-                          aria-label={t("Folder")}
+                          aria-label=${t("Folder")}
                           title="Click the path's end to type one (Ctrl+L)"
                       >
                           ${crumbs.map((crumb, index) =>
@@ -574,7 +574,7 @@ export function CwdSheet({ mode, fromList = false }) {
                     }
                     <button
                         class="icon-button"
-                        aria-label={t("Never mind")}
+                        aria-label=${t("Never mind")}
                         onClick=${() => setMissing(null)}
                     >
                         <${Icon} name="close" size=${15} />
@@ -583,7 +583,7 @@ export function CwdSheet({ mode, fromList = false }) {
             </div>`
         }
         <div class="fp-main">
-            <nav class="fp-places" aria-label={t("Places")}>
+            <nav class="fp-places" aria-label=${t("Places")}>
                 ${places.map((each) => place(each.path, each.name, each.icon, null, each.pin))}
                 ${favorites.length > 0 && html`<div class="fp-places-title">Favorites</div>`}
                 ${favorites.map((path, index) =>
@@ -623,7 +623,7 @@ export function CwdSheet({ mode, fromList = false }) {
                     html`<${LineInput}
                         class="fp-naming"
                         placeholder="Folder name"
-                        label={t("The new folder's name")}
+                        label=${t("The new folder's name")}
                         onSubmit=${(name) => make(joined(folder, name))}
                         onCancel=${() => {
                             setNaming(false);

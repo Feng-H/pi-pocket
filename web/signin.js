@@ -44,7 +44,7 @@ export function SignIn() {
         <div class="row">
             <input
                 value=${value}
-                placeholder={t("Link, token, or invite code")}
+                placeholder=${t("Link, token, or invite code")}
                 autocapitalize="none"
                 autocorrect="off"
                 autocomplete="off"
@@ -52,7 +52,7 @@ export function SignIn() {
                 onInput=${(event) => setValue(event.currentTarget.value)}
                 onKeyDown=${(event) => event.key === "Enter" && go()}
             />
-            <button class="button primary" onClick=${go}>{t("Sign in")}</button>
+            <button class="button primary" onClick=${go}>${t("Sign in")}</button>
         </div>
     </div>`;
 }

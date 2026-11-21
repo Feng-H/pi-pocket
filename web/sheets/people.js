@@ -138,7 +138,7 @@ export function InviteSheet({ session = null }) {
         ([each]) => each === (invite ? (invite.minutes ?? 15) : minutes),
     )?.[2];
 
-    return html`<${Sheet} title={t("Invite someone")} onClose=${closeSheet}>
+    return html`<${Sheet} title=${t("Invite someone")} onClose=${closeSheet}>
         ${
             me?.role === "owner" &&
             html`<label class="check">
@@ -292,7 +292,7 @@ export function InviteSheet({ session = null }) {
                 </div>`
                 : failed
                   ? html`<p class="muted small">No invite yet. Tap New invite to try again.</p>`
-                  : html`<${Loader} label={t("Making an invite")} />`
+                  : html`<${Loader} label=${t("Making an invite")} />`
         }
         <button class="button wide" onClick=${create}> ${t("New invite")}</button>
         ${!collab() && html`<${PeopleList} />`}
@@ -388,7 +388,7 @@ function PeopleList() {
                             collab() &&
                             html`<button
                                 class="button small"
-                                title={t("Change what they can do")}
+                                title=${t("Change what they can do")}
                                 onClick=${() => change(person, { role: person.role === "viewer" ? "guest" : "viewer" })}
                             >
                                 ${person.role === "viewer" ? t("Let steer") : t("View only")}
@@ -399,7 +399,7 @@ function PeopleList() {
                             person.sessions &&
                             html`<button
                                 class="button small"
-                                title={t("Let them see every session")}
+                                title=${t("Let them see every session")}
                                 onClick=${() => change(person, { sessions: null })}
                             >
                                 All sessions
@@ -431,7 +431,7 @@ function PeopleList() {
 export function PeopleSheet() {
     const canInvite = canSteer() && !scoped();
 
-    return html`<${Sheet} title={t("People")} onClose=${closeSheet}>
+    return html`<${Sheet} title=${t("People")} onClose=${closeSheet}>
         ${
             canInvite &&
             html`<button class="button primary wide" onClick=${() => openSheet({ type: "invite" })}>

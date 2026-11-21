@@ -227,7 +227,7 @@ function MessageExtras({ entry, attachments }) {
         ${
             entry.images > 0 &&
             !attachments &&
-            html`<${EntryImages} entryId=${entry.id} count=${entry.images} label={t("Image")} />`
+            html`<${EntryImages} entryId=${entry.id} count=${entry.images} label=${t("Image")} />`
         }
     `;
 }
@@ -622,7 +622,7 @@ function LinkedMessage({ entry, view, address, text, attachments, fresh }) {
             class=${`prompt linked-message tappable ${folds ? "folds" : ""} ${open ? "open" : ""}`}
             data-part="prompt"
             data-from="linked"
-            title={t("Edit, send again, or copy")}
+            title=${t("Edit, send again, or copy")}
             tabindex="0"
             onClick=${(event) => openMessage(event, entry.id)}
             onKeyDown=${(event) => {
@@ -809,7 +809,7 @@ function UserMessage({ entry, view, users }) {
             class="prompt tappable"
             data-part="prompt"
             data-from=${from}
-            title={t("Edit, send again, or copy")}
+            title=${t("Edit, send again, or copy")}
             tabindex="0"
             onClick=${(event) => openMessage(event, entry.id)}
             onKeyDown=${(event) => {
@@ -1208,7 +1208,7 @@ function ThoughtStep({ block, streaming, reading }) {
                     ${streaming ? t("Thinking") : block.redacted ? t("Thought (redacted)") : t("Thought")}
                 </span>
                 <span class="step-subject"></span>
-                ${streaming && html`<${Spinner} label={t("Thinking")} />`}
+                ${streaming && html`<${Spinner} label=${t("Thinking")} />`}
             </button>
         </div>
         ${
@@ -2357,8 +2357,8 @@ defineItem("reply", {
         html`<span class="reaction-host answer-tool">
             <button
                 class="reaction add"
-                aria-label={t("React")}
-                title={t("React")}
+                aria-label=${t("React")}
+                title=${t("React")}
                 onClick=${() => setPicking(!picking)}
             >
                 ☺+
@@ -2421,7 +2421,7 @@ defineItem("reply", {
     render: ({ entry }) =>
         html`<button
             class="answer-tool"
-            title={t("Fork, retry")}
+            title=${t("Fork, retry")}
             onClick=${() => openSheet({ type: "message", entryId: entry.id })}
         >
             More
@@ -3433,7 +3433,7 @@ function LiveLine({ live, approvals, start, entries, conversationId }) {
             live.busy &&
             canSteer() &&
             !COARSE.matches &&
-            html`<span class="live-esc" title={t("Press Esc twice")}>{t("Esc stops")}</span>`
+            html`<span class="live-esc" title=${t("Press Esc twice")}>${t("Esc stops")}</span>`
         }
     </div>`;
 }
@@ -4215,7 +4215,7 @@ export function Transcript() {
             showJump &&
             html`<button
                 class="jump"
-                aria-label={t("To the bottom")}
+                aria-label=${t("To the bottom")}
                 onClick=${() => {
                     stick.current = true;
                     toBottom(scroller.current);
