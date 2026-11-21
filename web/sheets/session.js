@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { t } from "../i18n.js";
 import { sessionActions } from "../extension-ui.js";
 import { deselectInList, selectedInList, selectFromList, setArchived } from "../sessions.js";
 import {
@@ -62,47 +63,47 @@ function sessionItems(session) {
 
     return [
         [
-            { label: "Open in new tab", run: () => window.open(linkOf(id), "_blank", "noopener") },
-            { label: "Copy link", run: () => copy(linkOf(id), "link") },
-            { label: "Copy folder path", run: () => copy(session.cwd, "folder path") },
+            { label: t("Open in new tab"), run: () => window.open(linkOf(id), "_blank", "noopener") },
+            { label: t("Copy link"), run: () => copy(linkOf(id), "link") },
+            { label: t("Copy folder path"), run: () => copy(session.cwd, "folder path") },
         ],
         [
             steer && {
-                label: "Rename",
+                label: t("Rename"),
                 opens: true,
                 run: () => store.set({ sheet: { type: "rename", id } }),
             },
-            starts && { label: "Fork", hint: "up to the last reply", run: () => fork(id) },
-            starts && { label: "New session in this folder", run: () => newIn(session.cwd) },
+            starts && { label: t("Fork"), hint: t("up to the last reply"), run: () => fork(id) },
+            starts && { label: t("New session in this folder"), run: () => newIn(session.cwd) },
             starts &&
                 collab() && {
-                    label: "Share",
-                    hint: "invite someone",
+                    label: t("Share"),
+                    hint: t("invite someone"),
                     opens: true,
                     run: () => store.set({ sheet: { type: "invite", session: id } }),
                 },
         ],
         [
             !session.archived && {
-                label: pinned ? "Unpin from the top" : "Pin to the top",
-                hint: "this browser",
+                label: t(pinned ? "Unpin from the top" : "Pin to the top"),
+                hint: t("this browser"),
                 run: () => togglePin(id),
             },
             pinned &&
                 pins[0] !== id && {
-                    label: "Move to top",
-                    hint: "of the pinned",
+                    label: t("Move to top"),
+                    hint: t("of the pinned"),
                     run: () => movePin(id, false),
                 },
             pinned &&
                 pins.at(-1) !== id && {
-                    label: "Move to bottom",
-                    hint: "of the pinned",
+                    label: t("Move to bottom"),
+                    hint: t("of the pinned"),
                     run: () => movePin(id, true),
                 },
             !session.archived && {
-                label: isUnread(id) ? "Mark read" : "Mark unread",
-                hint: "this browser",
+                label: t(isUnread(id) ? "Mark read" : "Mark unread"),
+                hint: t("this browser"),
                 run: () => setUnread(id, !isUnread(id)),
             },
         ],
@@ -114,13 +115,13 @@ function sessionItems(session) {
         [
             selectedInList() > 0
                 ? {
-                      label: "Deselect all",
-                      hint: `${selectedInList()} selected`,
+                      label: t("Deselect all"),
+                      hint: t("$ selected", selectedInList()),
                       run: deselectInList,
                   }
-                : { label: "Select", hint: "then add others", run: () => selectFromList(id) },
+                : { label: t("Select"), hint: t("then add others"), run: () => selectFromList(id) },
             steer && {
-                label: session.archived ? "Unarchive" : "Archive",
+                label: t(session.archived ? "Unarchive" : "Archive"),
                 run: () => setArchived([id], !session.archived),
             },
         ],

@@ -1,6 +1,7 @@
 // The message box: send, steer or queue while busy, attach files, mention files with @, run commands with !, recall
 // what was sent before (↑, Ctrl+R), fold long pastes, pick the model, stop.
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
+import { t } from "./i18n.js";
 import { Avatar } from "./avatar.js";
 import { useBack } from "./back.js";
 import { boxKey, keyBox } from "./box-keys.js";
@@ -385,7 +386,7 @@ const SEND_MODES = [
 ];
 
 /** What a send mode does, for a queued message's buttons. */
-const modeHint = (mode) => SEND_MODES.find(([value]) => value === mode)[2];
+const modeHint = (mode) => t(SEND_MODES.find(([value]) => value === mode)[2]);
 
 /** What Interrupt does to a message waiting in the queue: the others there stay queued. */
 const QUEUED_INTERRUPT_HINT =
@@ -403,7 +404,7 @@ function ModePick({ mode, onPick }) {
     const menu = useRef(null);
     // Opened from the keyboard: the focus goes to the chosen mode.
     const keyed = useRef(false);
-    const label = SEND_MODES.find(([value]) => value === mode)[1];
+    const label = t(SEND_MODES.find(([value]) => value === mode)[1]);
 
     // Closed from inside the menu, the focus goes back to the button; from the box, it stays there.
     const close = () => {
@@ -508,14 +509,14 @@ function ModePick({ mode, onPick }) {
                         role="menuitemradio"
                         aria-checked=${mode === value ? "true" : "false"}
                         tabindex="-1"
-                        title=${tip}
+                        title=${t(tip)}
                         onMouseDown=${(event) => event.preventDefault()}
                         onClick=${() => {
                             onPick(value);
                             close();
                         }}
                     >
-                        <span>${name}</span>
+                        <span>${t(name)}</span>
                         ${mode === value && html`<${Icon} name="check" size=${14} />`}
                     </button>`,
                 )}
@@ -1406,7 +1407,7 @@ export function Composer() {
                 break;
             } catch (error) {
                 if (tries >= 2) {
-                    notify("error", `Voice message did not go out: ${error.message ?? error}`);
+                    notify("error", t("Voice message did not go out: $", error.message ?? error));
 
                     return;
                 }
@@ -1454,7 +1455,7 @@ export function Composer() {
             (strips.length > 0 || quoted.length > 0 || quoteIn) &&
             (parsed || shell || template || text.trimStart().startsWith("/skill:"))
         ) {
-            return notify("info", "A quote cannot go with a command. Remove the quotes to run it.");
+            return notify("info", t("A quote cannot go with a command. Remove the quotes to run it."));
         }
 
         // What shows is what goes: words still coming would land in the emptied box.
@@ -2007,14 +2008,14 @@ export function Composer() {
     };
 
     const placeholder = dictation.listening
-        ? "Listening…"
+        ? t("Listening…")
         : busy
           ? sendMode === "steer"
-              ? "Steer the current run…"
+              ? t("Steer the current run…")
               : sendMode === "interrupt"
-                ? "Stop the run and send this now…"
-                : "Queue a message for after this run…"
-          : "Ask Pi anything…";
+                ? t("Stop the run and send this now…")
+                : t("Queue a message for after this run…")
+          : t("Ask Pi anything…");
     const inbox = view.inbox ?? [];
     const { me, users } = store.state;
     const queuedBy = (item) =>
@@ -2557,8 +2558,8 @@ export function Composer() {
                             class=${`send-button ${canSend ? "ready" : ""}`}
                             data-part="send-button"
                             data-state=${canSend ? "ready" : undefined}
-                            aria-label="Send"
-                            title=${coarse ? "Send" : "Send (Enter)"}
+                            aria-label=${t("Send")}
+                            title=${coarse ? t("Send") : t("Send (Enter)")}
                             disabled=${!canSend}
                             onClick=${send}
                         >
@@ -2662,8 +2663,8 @@ function StopButton() {
     return html`<button
         class="stop-button"
         data-part="composer-button stop-button"
-        aria-label="Stop"
-        title="Stop (Esc twice). Queued messages are held until someone sends them"
+        aria-label=${t("Stop")}
+        title=${t("Stop (Esc twice). Queued messages are held until someone sends them")}
         onClick=${() => attempt(actions.abort)}
     >
         <span class="stop-square" aria-hidden="true"></span>

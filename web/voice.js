@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { notify, store } from "./store.js";
 import { prefs, setPrefs } from "./theme.js";
+import { t } from "./i18n.js";
 import { html, Icon, Spinner } from "./ui.js";
 
 /** The browser's recognizer, looked up when used (so a page can stand one in), or undefined where there is none. */
@@ -305,8 +306,9 @@ export function useDictation(box, onText, { top = false, place = null, onError =
                     // Aborted is this app's own doing; no speech for a while ends a quiet dictation, said once.
                     if (event.error !== "aborted") {
                         const level = event.error === "no-speech" ? "info" : "error";
+                        const said = ERRORS[event.error];
 
-                        notify(level, ERRORS[event.error] ?? `Dictation stopped: ${event.error}.`);
+                        notify(level, said === undefined ? t("Dictation stopped: $", event.error) : t(said));
                     }
                 };
 
@@ -322,7 +324,7 @@ export function useDictation(box, onText, { top = false, place = null, onError =
                 } catch (error) {
                     this.recognition = null;
                     current = null;
-                    notify("error", `Dictation did not start: ${error.message ?? error}`);
+                    notify("error", t("Dictation did not start: $", error.message ?? error));
                 }
             },
             toggle() {
@@ -336,7 +338,7 @@ export function useDictation(box, onText, { top = false, place = null, onError =
             /** Record into a chunked MediaRecorder; the transcription lands when the person stops. */
             startRecording() {
                 if (typeof MediaRecorder === "undefined" || navigator.mediaDevices === undefined) {
-                    notify("error", "This browser cannot record audio for dictation.");
+                    notify("error", t("This browser cannot record audio for dictation."));
 
                     return;
                 }
@@ -347,7 +349,7 @@ export function useDictation(box, onText, { top = false, place = null, onError =
                     ) ?? "";
 
                 if (mime === "") {
-                    notify("error", "This browser cannot record audio for dictation.");
+                    notify("error", t("This browser cannot record audio for dictation."));
 
                     return;
                 }
@@ -399,7 +401,7 @@ export function useDictation(box, onText, { top = false, place = null, onError =
 
                     if (!out.ok) {
                         const data = await out.json().catch(() => undefined);
-                        const message = data?.error ?? `Transcription failed (${out.status}).`;
+                        const message = data?.error ?? t("Transcription failed ($).", out.status);
 
                         notify(out.status === 501 ? "info" : "error", message);
 
@@ -437,7 +439,7 @@ export function useDictation(box, onText, { top = false, place = null, onError =
                     element.setSelectionRange(caret, caret);
                     this.hear.current(value, caret);
                 } catch (error) {
-                    notify("error", `Dictation failed: ${error.message ?? error}`);
+                    notify("error", t("Dictation failed: $", error.message ?? error));
                 } finally {
                     setListening(false);
                 }
@@ -482,7 +484,7 @@ export function MicButton({ dictation, class: className = "", size = 17, part, d
         data-part=${part}
         aria-label="Dictate"
         aria-pressed=${listening ? "true" : "false"}
-        title=${listening ? "Listening: tap to stop (Alt+V)" : "Dictate (Alt+V)"}
+        title=${listening ? t("Listening: tap to stop (Alt+V)") : t("Dictate (Alt+V)")}
         disabled=${disabled}
         onMouseDown=${(event) => event.preventDefault()}
         onClick=${toggle}
@@ -690,8 +692,8 @@ export function VoiceButton({ voice, class: className = "", size = 17, part, dis
         <button
             type="button"
             class="voice-lang"
-            aria-label="Voice message language"
-            title=${`Voice message language: ${lang[1]}`}
+            aria-label=${t("Voice message language: $", t(lang[1]))}
+            title=${t("Voice message language: $", t(lang[1]))}
             disabled=${sending}
             onMouseDown=${(event) => event.preventDefault()}
             onClick=${() => cycleVoiceLanguage()}
@@ -708,10 +710,14 @@ export function VoiceButton({ voice, class: className = "", size = 17, part, dis
             type="button"
             class=${`icon-button mic-button ${recording ? "listening" : ""} ${className}`}
             data-part=${part}
-            aria-label=${sending ? "Sending the voice message" : "Voice message"}
+            aria-label=${sending ? t("Sending the voice message") : t("Voice message")}
             aria-pressed=${recording ? "true" : "false"}
             title=${
-                recording ? "Recording: tap to send" : sending ? "Sending the recording…" : "Record a voice message"
+                recording
+                    ? t("Recording: tap to send")
+                    : sending
+                      ? t("Sending the recording…")
+                      : t("Record a voice message")
             }
             disabled=${disabled || sending}
             onMouseDown=${(event) => event.preventDefault()}
@@ -724,8 +730,8 @@ export function VoiceButton({ voice, class: className = "", size = 17, part, dis
             html`<button
                 type="button"
                 class="icon-button voice-cancel"
-                aria-label="Drop the recording"
-                title="Drop the recording"
+                aria-label=${t("Drop the recording")}
+                title=${t("Drop the recording")}
                 disabled=${disabled}
                 onMouseDown=${(event) => event.preventDefault()}
                 onClick=${voice.cancel}

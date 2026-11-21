@@ -41,6 +41,7 @@ import { prefetchRunning } from "./running-board.js";
 import { dismiss as dismissSubagent } from "./subagents.js";
 import { finishedUnseen, fromServer, markSeen, restoreSeen, seenSnapshot } from "./seen.js";
 import { isPinned, prefs, setPrefs, togglePin } from "./theme.js";
+import { t, uiLanguage } from "./i18n.js";
 import {
     APPLE,
     dragWidth,
@@ -831,7 +832,7 @@ function SessionRow({
     // A finger held on it, before its actions open: the list's press sets it, and only this row draws again.
     const [pressing, setPressing] = useState(false);
     const channel = session.channel === true;
-    const title = channel ? `#${session.title ?? ""}` : session.title ?? "New session";
+    const title = channel ? `#${session.title ?? ""}` : session.title ?? t("New session");
     const path = shortPath(session.cwd, home);
     const where = [
         session.worktree ? `${path} ⎇ ${session.worktree.branch}` : path,
@@ -906,7 +907,7 @@ function SessionRow({
             <span class="session-mark">
                 ${
                     selected
-                        ? html`<span class="state-check" role="img" aria-label="Selected">
+                        ? html`<span class="state-check" role="img" aria-label=${t("Selected")}>
                             <${Icon} name="check" size=${9} />
                         </span>`
                         : html`<span
@@ -1375,6 +1376,7 @@ const ROW_KEYS = [
     "chatReads",
     "peekSeen",
     "extensionsRev",
+    "appearance",
 ];
 
 function AllSessions({ compact = false }) {
@@ -2374,12 +2376,12 @@ function AllSessions({ compact = false }) {
             const action =
                 group.slot === "needs" && failedRows.length > 1
                     ? {
-                          label: `Dismiss ${failedRows.length} failed`,
+                          label: t("Dismiss $ failed", failedRows.length),
                           run: () => dismissAll(failedRows),
                       }
                     : group.slot === "ready"
                       ? {
-                            label: "Mark all read",
+                            label: t("Mark all read"),
                             run: () => markRead(group.rows.map((row) => row.session)),
                         }
                       : undefined;
@@ -2401,7 +2403,7 @@ function AllSessions({ compact = false }) {
                           <span class="group-name" data-part="session-group-name">
                               ${
                                   typeof group.label === "string"
-                                      ? html`<b>${group.label}</b>`
+                                      ? html`<b>${t(group.label)}</b>`
                                       : group.label
                               }
                           </span>
@@ -2410,8 +2412,10 @@ function AllSessions({ compact = false }) {
                               html`<span
                                   class=${`group-trouble ${trouble}`}
                                   role="img"
-                                  aria-label=${trouble === "waiting" ? "A session needs you" : "A session failed"}
-                                  title=${trouble === "waiting" ? "A session here needs you" : "A session here failed"}
+                                  aria-label=${t(trouble === "waiting" ? "A session needs you" : "A session failed")}
+                                  title=${
+                                      t(trouble === "waiting" ? "A session here needs you" : "A session here failed")
+                                  }
                               ></span>`
                           }
                           <span class="group-count" data-part="session-group-count">
@@ -2453,7 +2457,7 @@ function AllSessions({ compact = false }) {
                                 data-part="session-more"
                                 onClick=${() => setAllNeeds(true)}
                             >
-                                Show ${group.rows.length - rows.length} more
+                                ${t("Show $ more", group.rows.length - rows.length)}
                             </button>`
                         }
                     </div>
@@ -2471,25 +2475,33 @@ function AllSessions({ compact = false }) {
         data-part="session-list"
     >
         <div class="sessions-head">
-            <span class="sessions-name" data-part="session-list-title">Sessions</span>
+            <span class="sessions-name" data-part="session-list-title">${t("Sessions")}</span>
             <span class="sessions-count">${sessionsLoaded ? count : ""}</span>
             ${
                 canStart &&
                 html`<button
                     class="new-button"
-                    title="New session (Alt+N)"
+                    title=${t("New session (Alt+N)")}
                     onClick=${() => openSheet({ type: "cwd", mode: "new", fromList: true })}
                 >
                     <${Icon} name="plus" size=${14} />
-                    New
+                    ${t("New")}
                 </button>`
             }
+            <button
+                class="lang-button"
+                title=${uiLanguage() === "zh" ? "Switch to English" : "切换到中文"}
+                aria-label=${uiLanguage() === "zh" ? "Switch to English" : "切换到中文"}
+                onClick=${() => setPrefs({ uiLang: uiLanguage() === "zh" ? "en" : "zh" })}
+            >
+                ${uiLanguage() === "zh" ? "EN" : "中文"}
+            </button>
         </div>
         <label class=${`search ${query ? "filled" : ""}`} data-part="session-search">
             <${Icon} name="search" size=${14} />
             <input
-                placeholder="Search sessions"
-                aria-label="Search sessions"
+                placeholder=${t("Search sessions")}
+                aria-label=${t("Search sessions")}
                 value=${query}
                 onInput=${(event) => setQuery(event.currentTarget.value)}
                 onKeyDown=${(event) => {
@@ -2524,8 +2536,8 @@ function AllSessions({ compact = false }) {
                         </span>
                         <button
                             class="search-launcher"
-                            title="Launcher"
-                            aria-label="Open the launcher"
+                            title=${t("Launcher")}
+                            aria-label=${t("Open the launcher")}
                             onClick=${(event) => {
                                 event.preventDefault();
                                 store.set({ launcher: true, drawer: false });
@@ -2567,11 +2579,11 @@ function AllSessions({ compact = false }) {
                               ? `Priority, ${needCount} ${needCount === 1 ? "needs" : "need"} you`
                               : undefined
                     }
-                    title=${key === "archived" ? "Archived" : undefined}
+                    title=${key === "archived" ? t("Archived") : undefined}
                     class=${tab === key ? "on" : ""}
                     onClick=${() => setTab(key)}
                 >
-                    ${key === "archived" ? html`<${Icon} name="archive" size=${14} />` : label}
+                    ${key === "archived" ? html`<${Icon} name="archive" size=${14} />` : t(label)}
                     ${
                         key === "priority" &&
                         needCount > 0 &&
