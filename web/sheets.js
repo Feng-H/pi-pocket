@@ -1,6 +1,7 @@
 // The open sheet: which component shows it. The sheets themselves are in web/sheets/, and a few beside their features
 // (chat.js, notify.js, share.js).
 import { ChatSheet } from "./chat.js";
+import { t } from "./i18n.js";
 import { ExtensionSheet, onExtensionsGone } from "./extension-ui.js";
 import { NotificationsSheet } from "./notify.js";
 import { ShareSheet } from "./share.js";
@@ -292,8 +293,8 @@ function sheetBody(sheet) {
             body =
                 renamed &&
                 html`<${TextSheet}
-                title="Rename"
-                label="Session title"
+                title={t("Rename")}
+                label={t("Session title")}
                 initial=${renamed.title ?? ""}
                 submit=${(value) => actions.updateSession(renamed.id, { title: value })}
             />`;
@@ -377,20 +378,20 @@ function sheetBody(sheet) {
             break;
         case "reset":
             body = html`<${TextSheet}
-                title="New context"
+                title={t("New context")}
                 hint="Pi starts fresh: it no longer sees the messages so far, though everyone here still does."
-                label="Handoff note (optional)"
+                label={t("Handoff note (optional)")}
                 placeholder="e.g. We fixed the login bug; next is the signup form."
                 multiline=${true}
-                button="Start a new context"
+                button={t("Start a new context")}
                 submit=${(value) => actions.reset(value)}
             />`;
             break;
         case "instructions":
             body = html`<${TextSheet}
-                title="Instructions for Pi"
+                title={t("Instructions for Pi")}
                 hint="Pi gets these with every message in this session, after its own instructions. Everyone here can see them. Leave empty for none."
-                label="Instructions"
+                label={t("Instructions")}
                 initial=${view.agent?.instructions ?? ""}
                 placeholder="e.g. Use pnpm, not npm. Ask before adding dependencies."
                 multiline=${true}
@@ -399,22 +400,22 @@ function sheetBody(sheet) {
             break;
         case "compact":
             body = html`<${TextSheet}
-                title="Compact context"
-                label="What should the summary keep? (optional)"
-                placeholder="e.g. the failing test names"
+                title={t("Compact context")}
+                label={t("What should the summary keep? (optional)")}
+                placeholder={t("e.g. the failing test names")}
                 multiline=${true}
-                button="Compact"
+                button={t("Compact")}
                 submit=${(value) => actions.compact(value)}
             />`;
             break;
         case "name":
             body = html`<${TextSheet}
-                title="Your name"
-                label="Shown on your messages to others"
+                title={t("Your name")}
+                label={t("Shown on your messages to others")}
                 initial=${me?.name ?? ""}
                 header=${html`<${MyPhoto} />`}
                 footer=${html`<button class="button ghost wide sheet-footer signout" onClick=${signOut}>
-                    <${Icon} name="logout" size=${16} /> Sign out
+                    <${Icon} name="logout" size=${16} /> ${t("Sign out")}
                 </button>`}
                 submit=${async (value) => {
                     await api("me", { name: value });

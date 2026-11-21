@@ -192,6 +192,21 @@ const WORDS = {
         "Restarting. Running work continues after the restart.": "重启中。正在运行的工作会在重启后继续。",
         "running work resumes": "运行中的工作会继续",
         "Sign out": "退出登录",
+        "Session title": "会话标题",
+        "New context": "新建上下文",
+        "Pi starts fresh: it no longer sees the messages so far, though everyone here still does.":
+            "Pi 重新开始:不再看到之前的消息,但这里的人仍能看到。",
+        "Handoff note (optional)": "交接备注(可选)",
+        "e.g. We fixed the login bug; next is the signup form.": "例:登录 bug 已修;接下来是注册表单。",
+        "Start a new context": "开始新上下文",
+        Instructions: "指令",
+        "Pi gets these with every message in this session, after its own instructions. Everyone here can see them. Leave empty for none.":
+            "Pi 在本会话的每条消息都会带上这些指令(在其自身指令之后)。这里所有人可见。留空则不设。",
+        "e.g. Use pnpm, not npm. Ask before adding dependencies.": "例:用 pnpm 不用 npm;加依赖前先问。",
+        "What should the summary keep? (optional)": "摘要要保留什么?(可选)",
+        "e.g. the failing test names": "例:失败的测试名",
+        Compact: "压缩",
+        "Shown on your messages to others": "显示在你发给别人消息上的名字",
         // 启动器(Ctrl K)。
         "Sessions, actions, themes…": "会话、操作、主题…",
         All: "全部",
