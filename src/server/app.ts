@@ -77,6 +77,7 @@ import {
     FolderFavoritesDoc,
     MemoryDoc,
     RunFailureDoc,
+    type RemovedSession,
     type SessionMeta,
     SessionsDoc,
     SpendDoc,
@@ -541,8 +542,10 @@ export class PocketApp {
     /** Each conversation's subagents, and those with a report on its way to it: for the board and the session list. */
     readonly #subagents = new Map<ConversationId, SubagentsOf>();
     #sessions: Record<string, SessionMeta> = {};
-    /** The sessions removed from the app (`DeletedDoc`): nobody sees them or their subagents again. */
+    /** The conversations of sessions removed from the app (`DeletedDoc`): nobody sees them again. */
     #removed = new Set<string>();
+    /** The session each removed session was forked from: a live fork still reads its uploads through it. */
+    #removedForks = new Map<string, NonNullable<SessionMeta["forkedFrom"]>>();
     #sessionsTimer: NodeJS.Timeout | undefined;
     /** The extensions installed now: every conversation runs with them, except PiP's own, which PiP alone selects. */
     #registry: Registry | undefined;
@@ -1150,7 +1153,9 @@ export class PocketApp {
         await this.pip.tuneAll((line) => this.#log(line));
         // Work a previous process left unfinished continues now.
         this.harness.resume();
-        void this.sessionCleanup.resume();
+        void this.sessionCleanup
+            .resume()
+            .catch((error: unknown) => this.#log(`Removals could not go on: ${describe(error)}`));
         // Asset bytes that a deleted artifact left, if a restart cut its sweep off (`artifacts.ts`).
         void sweepAssets(this).catch((error: unknown) =>
             this.#log(`Unused artifact assets could not be removed: ${describe(error)}`),
@@ -1164,9 +1169,7 @@ export class PocketApp {
      */
     async #recover(storage: Storage): Promise<ConversationId[]> {
         this.#sessions = { ...((await this.harness.snapshot(SessionsDoc, context))?.items ?? {}) };
-        this.#removed = new Set(
-            Object.keys((await this.harness.snapshot(DeletedDoc, context))?.items ?? {}),
-        );
+        this.#noteRemoved((await this.harness.snapshot(DeletedDoc, context))?.items);
         const conversations: ConversationId[] = [];
         const unrecorded = new Map<ConversationId, Missing[]>();
         let cursor: Cursor | undefined;
@@ -1476,9 +1479,7 @@ export class PocketApp {
                 );
             }
         } else if (kind === DeletedDoc.definition.kind) {
-            this.#removed = new Set(
-                Object.keys((value as { items?: Record<string, unknown> } | null)?.items ?? {}),
-            );
+            this.#noteRemoved((value as { items?: Record<string, RemovedSession> } | null)?.items);
 
             for (const client of [...this.#clients]) {
                 if (
@@ -2464,7 +2465,7 @@ export class PocketApp {
     canSee(user: User, id: ConversationId): boolean {
         const root = this.rootOf(id);
 
-        if (this.#removed.has(String(root))) {
+        if (this.#removed.has(String(root)) || this.#removed.has(String(id))) {
             return false;
         }
 
@@ -3205,9 +3206,26 @@ export class PocketApp {
         return [...this.#busy];
     }
 
-    /** Every session's id, PiP's too. */
-    sessionIds(): ConversationId[] {
-        return Object.keys(this.#sessions).map((id) => Number(id) as unknown as ConversationId);
+    /** The session this one was forked from: also for a session removed from the app, whose forks still read it. */
+    forkedFrom(id: ConversationId): SessionMeta["forkedFrom"] {
+        return this.#sessions[String(id)]?.forkedFrom ?? this.#removedForks.get(String(id));
+    }
+
+    #noteRemoved(items: Record<string, RemovedSession> | undefined): void {
+        this.#removed = new Set();
+        this.#removedForks = new Map();
+
+        for (const [key, record] of Object.entries(items ?? {})) {
+            this.#removed.add(key);
+
+            for (const each of record.conversations) {
+                this.#removed.add(String(each));
+            }
+
+            if (record.forkedFrom !== undefined) {
+                this.#removedForks.set(key, record.forkedFrom);
+            }
+        }
     }
 
     /** The catalogue entry of a session; undefined for subagents and other conversations. */
