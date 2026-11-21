@@ -264,6 +264,8 @@ const WORDS = {
         "Channel name": "频道名称",
         Create: "创建",
         "Channel # $ is new; the agent answers here.": "频道 #$ 已创建,Agent 会在这里自动回复。",
+        "A channel called #$ is already here.": "已经有叫 #$ 的频道了。",
+        "#$ is already here; opening it.": "#$ 已经存在,已为你打开。",
         // 外观设置。
         Appearance: "外观",
         Theme: "主题",

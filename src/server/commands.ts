@@ -438,6 +438,22 @@ export class Commands {
         const channel = request.channel === true;
         const requested = optionalText(request.cwd, "cwd") ?? app.defaultCwd;
 
+        // One channel of a name: a second would split its conversation in two.
+        if (channel && title !== undefined) {
+            const said = title.trim().replace(/^#/, "").toLowerCase();
+            const clash = app
+                .sessions()
+                .find(
+                    (session) =>
+                        session.channel === true &&
+                        (session.title ?? "").trim().replace(/^#/, "").toLowerCase() === said,
+                );
+
+            if (clash !== undefined) {
+                throw new HttpError(409, `A channel called ${said} is already here.`);
+            }
+        }
+
         app.requireWorkspaceOwner(user, requested);
         const remote = app.workspaceScheme(requested) !== undefined;
 

@@ -1,5 +1,6 @@
 // Slash commands in the message box ("/compact", "/model sonnet", …). They run here in the app and are never sent to Pi.
 import { browserAvailable, openInBrowser, toggleBrowser } from "./browser.js";
+import { t } from "./i18n.js";
 import { filesAvailable, toggleFiles } from "./files-panel.js";
 import { branchAvailable } from "./sheets/branch.js";
 import { memoryAvailable, remember } from "./sheets/memory.js";
@@ -189,13 +190,26 @@ async function newChannel(arg) {
         return notify("info", "Say the channel name, such as /channel general.");
     }
 
+    // One of a name: an existing channel opens instead of a second one starting.
+    const clash = store.state.sessions.find(
+        (each) =>
+            each.channel === true &&
+            (each.title ?? "").trim().replace(/^#/, "").toLowerCase() === name.toLowerCase(),
+    );
+
+    if (clash !== undefined) {
+        navigate(clash.id);
+
+        return notify("info", t("#$ is already here; opening it.", name));
+    }
+
     const created = await actions.createSession(agent()?.cwd, {
         channel: true,
         title: name,
     });
 
     navigate(created.id);
-    notify("info", `频道 #${name} 已创建,Agent 会在这里自动回复。`);
+    notify("info", t("Channel #$ is new; the agent answers here.", name));
 }
 
 async function copyLast() {

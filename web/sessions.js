@@ -2403,6 +2403,20 @@ function AllSessions({ compact = false }) {
                                     return;
                                 }
 
+                                // One of a name: a second channel called the same would split its talk in two.
+                                const clash = sessions.find(
+                                    (each) =>
+                                        each.channel === true &&
+                                        (each.title ?? "")
+                                            .trim()
+                                            .replace(/^#/, "")
+                                            .toLowerCase() === said.toLowerCase(),
+                                );
+
+                                if (clash !== undefined) {
+                                    throw new Error(t("A channel called #$ is already here.", said));
+                                }
+
                                 const cwd =
                                     group.rows.at(-1)?.session.cwd ??
                                     sessions.find((each) => each.id === markedOpen())?.cwd ??
