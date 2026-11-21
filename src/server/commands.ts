@@ -1275,6 +1275,7 @@ export class Commands {
             .filter(
                 (session) =>
                     session.channel === true &&
+                    session.archived !== true &&
                     tokens.includes((session.title ?? "").toLowerCase()),
             );
 

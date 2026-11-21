@@ -1261,7 +1261,7 @@ export function Composer() {
     const channelLive = channelTyped !== null && channelTyped.start !== hiddenChannel;
     const channelChoices = channelLive
         ? store.state.sessions
-              .filter((each) => each.channel === true)
+              .filter((each) => each.channel === true && each.archived !== true)
               .filter((each) =>
                   (each.title ?? "").toLowerCase().includes(channelTyped.query.toLowerCase()),
               )
