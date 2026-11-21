@@ -830,7 +830,8 @@ function SessionRow({
     });
     // A finger held on it, before its actions open: the list's press sets it, and only this row draws again.
     const [pressing, setPressing] = useState(false);
-    const title = session.channel === true ? `#${session.title ?? ""}` : session.title ?? "New session";
+    const channel = session.channel === true;
+    const title = channel ? `#${session.title ?? ""}` : session.title ?? "New session";
     const path = shortPath(session.cwd, home);
     const where = [
         session.worktree ? `${path} ⎇ ${session.worktree.branch}` : path,
@@ -894,7 +895,7 @@ function SessionRow({
             </span>`
         }
         <button
-            class=${`session ${unread ? "unread" : ""}`}
+            class=${`session ${unread ? "unread" : ""} ${channel ? "channel" : ""}`}
             data-part="session-button"
             aria-current=${open ? "page" : undefined}
             onPointerDown=${(event) => onSelect(event, session.id, setPressing)}
@@ -918,12 +919,13 @@ function SessionRow({
                         ></span>`
                 }
             </span>
-            <span class=${`session-title ${hit ? "with-hit" : ""}`}>
+            <span class=${`session-title ${hit ? "with-hit" : ""} ${channel ? "with-hash" : ""}`}>
+                ${channel && html`<span class="channel-hash" aria-hidden="true">#</span>`}
                 ${
                     hit
-                        ? html`<span class="session-name">${title}</span>
+                        ? html`<span class="session-name">${channel ? session.title ?? "" : title}</span>
                             <span class="session-hit">${withMark(hit, needle)}</span>`
-                        : withMark(title, needle)
+                        : withMark(channel ? session.title ?? "" : title, needle)
                 }
             </span>
             <span class="session-side">
@@ -1251,8 +1253,8 @@ function sameBranches(branches) {
 }
 
 /**
- * Sessions in groups: pinned, then by day or by folder. While searching, one flat list of matches. `today` is when
- * today began, and changes the day groups as days pass.
+ * Sessions in groups: channels first, then pinned, then by day or by folder. While searching, one flat list of
+ * matches. `today` is when today began, and changes the day groups as days pass.
  */
 function groupsOf(shown, { tab, needle, home, pinned, today }) {
     if (needle !== "" || tab === "archived") {
@@ -1260,15 +1262,26 @@ function groupsOf(shown, { tab, needle, home, pinned, today }) {
     }
 
     const groups = [];
+    // The channels, their own section at the top: every channel stays in it, a pinned one too.
+    const channels = shown.filter((session) => session.channel === true);
+
+    if (channels.length > 0) {
+        groups.push({ key: "channels", kind: "channels", label: "Channels", rows: channels });
+    }
+
     const pins = new Set(pinned);
     const byId = new Map(shown.map((session) => [session.id, session]));
-    const first = pinned.map((id) => byId.get(id)).filter(Boolean);
+    const first = pinned
+        .map((id) => byId.get(id))
+        .filter((session) => session && session.channel !== true);
 
     if (first.length > 0) {
         groups.push({ key: "pinned", label: "Pinned", rows: first });
     }
 
-    const rest = shown.filter((session) => !pins.has(session.id));
+    const rest = shown.filter(
+        (session) => !pins.has(session.id) && session.channel !== true,
+    );
     const byKey = new Map();
 
     for (const session of rest) {
@@ -2409,7 +2422,7 @@ function AllSessions({ compact = false }) {
                     : null;
 
             return html`<section
-                class=${`session-group ${folded ? "closed" : ""} ${view === "base" && searching ? "kept" : ""}`}
+                class=${`session-group ${group.kind === "channels" ? "channels" : ""} ${folded ? "closed" : ""} ${view === "base" && searching ? "kept" : ""}`}
                 data-part="session-group"
                 data-group=${group.slot}
                 key=${`${view}:${tab}:${group.key}`}

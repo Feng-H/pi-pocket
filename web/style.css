@@ -5769,6 +5769,44 @@ pre.diff .del {
     transform: rotate(-90deg);
 }
 
+/* The channels section: Discord-style. Its header reads in small caps, with no count; its rows sit quieter than a
+ * session's, a faint # before a muted name that hover or opening lights up. */
+.session-group.channels .group-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.session-group.channels .group-count {
+    display: none;
+}
+
+.session.channel .session-title {
+    color: var(--muted);
+}
+
+.session.channel .channel-hash {
+    margin-right: 3px;
+    color: var(--faint);
+    font-weight: 600;
+    transition: color var(--t-hover) var(--ease-out);
+}
+
+@media (hover: hover) {
+    .session.channel:hover .session-title {
+        color: var(--text);
+    }
+
+    .session.channel:hover .channel-hash {
+        color: var(--muted);
+    }
+}
+
+.session-row.active .session.channel .session-title {
+    color: var(--text);
+}
+
 /* Groups fold smoothly: a one-row grid whose row goes from 1fr to 0fr. */
 .group-body {
     display: grid;
