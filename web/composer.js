@@ -1389,17 +1389,30 @@ export function Composer() {
 
     // `other`: Ctrl/⌘+Enter, which sends the other way round (Steer and Queue swap; Interrupt stays).
     // A voice message sends the recording on its own: nothing typed, the audio as its attachment, straight out. The
-    // server hears what it says, and the words land in the conversation as the message.
+    // server hears what it says, and the words land in the conversation as the message. The upload goes again when
+    // the network blips mid-flight (a phone's way — a lock of the screen cuts it), and each try makes a fresh file.
     const sendVoice = async (blob) => {
         const file = new File(
             [blob],
             blob.type.includes("mp4") ? "voice-message.m4a" : "voice-message.webm",
             { type: blob.type },
         );
-        const attachment = await attempt(() => actions.upload(file));
+        let attachment;
 
-        if (!attachment) {
-            return;
+        for (let tries = 0; ; tries++) {
+            try {
+                attachment = await actions.upload(file);
+
+                break;
+            } catch (error) {
+                if (tries >= 2) {
+                    notify("error", `Voice message did not go out: ${error.message ?? error}`);
+
+                    return;
+                }
+
+                await new Promise((wake) => setTimeout(wake, 800));
+            }
         }
 
         const record = beginSend(
