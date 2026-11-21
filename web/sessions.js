@@ -71,7 +71,7 @@ export const toSessions = () => goHome(() => navigate(null, { replace: true }));
 
 /** The session list on its way: rows shaped like sessions, lit in turn. */
 function LoadingSessions() {
-    return html`<div role="status" aria-label="Loading sessions">
+    return html`<div role="status" aria-label=${t("Loading sessions")}>
         ${[72, 54, 64, 46, 58].map(
             (width, index) =>
                 html`<div
@@ -657,13 +657,12 @@ function markRead(list, { say = true } = {}) {
     });
 }
 
-/** "2 working · 1 failed subagents": a session's subagents, for the ⑂ mark's tooltip. */
+/** "子代理:2 进行中 · 1 失败": a session's subagents, for the ⑂ mark's tooltip. */
 function subagentsTip(counts) {
     const shown = { ...counts, failed: failing(counts) };
     const kinds = ["working", "waiting", "failed"].filter((kind) => shown[kind] > 0);
-    const total = kinds.reduce((sum, kind) => sum + shown[kind], 0);
 
-    return `${kinds.map((kind) => `${shown[kind]} ${kind}`).join(" · ")} subagent${total === 1 ? "" : "s"}`;
+    return `${t("subagents")}: ${kinds.map((kind) => `${shown[kind]} ${t(kind)}`).join(" · ")}`;
 }
 
 /**
@@ -960,12 +959,12 @@ function SessionRow({
                     !session.waiting &&
                     session.limited === undefined &&
                     !fork &&
-                    html`<span class="session-working" title="Working"></span>`
+                    html`<span class="session-working" title=${t("Working")}></span>`
                 }
                 ${
                     slot === undefined &&
                     session.waiting &&
-                    html`<span class="session-needs" title="Waiting for approval">
+                    html`<span class="session-needs" title=${t("Waiting for approval")}>
                         ${steers ? "needs you" : "waiting"}
                     </span>`
                 }
@@ -1054,7 +1053,7 @@ function SessionRow({
                     data-part="session-review"
                     data-review=${session.id}
                     aria-expanded=${expanded}
-                    title="See the call, then allow or deny it"
+                    title=${t("See the call, then allow or deny it")}
                     onClick=${() => onReview(session.id)}
                 >
                     Review
@@ -1108,8 +1107,8 @@ function SessionRow({
                 html`<button
                     class="session-act"
                     data-part="session-read"
-                    title="Mark read"
-                    aria-label="Mark read"
+                    title=${t("Mark read")}
+                    aria-label=${t("Mark read")}
                     onClick=${() => onRead(session.id)}
                 >
                     <${Icon} name="check" size=${14} />
@@ -1120,8 +1119,8 @@ function SessionRow({
                 !session.archived &&
                 html`<button
                     class=${`session-act session-pin ${pinned ? "on" : ""}`}
-                    title=${pinned ? "Unpin" : "Pin to the top"}
-                    aria-label=${pinned ? "Unpin" : "Pin"}
+                    title=${t(pinned ? "Unpin" : "Pin to the top")}
+                    aria-label=${pinned ? t("Unpin") : t("Pin")}
                     onClick=${() => togglePin(session.id)}
                 >
                     <${Icon} name="pin" size=${14} />
@@ -1132,8 +1131,8 @@ function SessionRow({
                 !session.archived &&
                 html`<button
                     class=${`session-act session-unread ${marked ? "on" : ""}`}
-                    title=${marked ? "Mark read" : "Mark unread"}
-                    aria-label=${marked ? "Mark read" : "Mark unread"}
+                    title=${t(marked ? "Mark read" : "Mark unread")}
+                    aria-label=${t(marked ? "Mark read" : "Mark unread")}
                     onClick=${() => setUnread(session.id, !marked)}
                 >
                     <${Icon} name=${marked ? "check" : "unread"} size=${14} />
@@ -1165,7 +1164,7 @@ function NeedAsk({ session, ask, steers, ownCall, answering, onAnswer }) {
     const ago = timeAgo(fromServer(ask.at));
     const more = ask.count > 1 ? ` · +${ask.count - 1}` : "";
     const tooLong =
-        ask.form || whole ? "" : `${ask.reason ? " · " : ""}too long to allow from here`;
+        ask.form || whole ? "" : `${ask.reason ? " · " : ""}${t("too long to allow from here")}`;
 
     return html`<div class="need-ask" data-part="session-ask">
         <div
@@ -1182,8 +1181,8 @@ function NeedAsk({ session, ask, steers, ownCall, answering, onAnswer }) {
         <div class="need-foot">
             <span
                 class="need-when"
-                title=${ask.count > 1 ? `${ask.count - 1} more waiting in this session` : undefined}
-            >${ago === "now" ? "just now" : `${ago} ago`}${more}</span>
+                title=${ask.count > 1 ? t("$ more waiting in this session", ask.count - 1) : undefined}
+            >${ago === "now" ? t("just now") : t("$ ago", ago)}${more}</span>
             ${
                 steers &&
                 !ask.form &&
@@ -1193,7 +1192,7 @@ function NeedAsk({ session, ask, steers, ownCall, answering, onAnswer }) {
                     disabled=${answering}
                     onClick=${() => onAnswer(session.id, ask.id, false)}
                 >
-                    Deny
+                    ${t("Deny")}
                 </button>`
             }
             ${
@@ -1202,11 +1201,11 @@ function NeedAsk({ session, ask, steers, ownCall, answering, onAnswer }) {
                 html`<button
                     class="need-button"
                     data-part="session-decline"
-                    title="Decline it from here; answer it where it waits"
+                    title=${t("Decline it from here; answer it where it waits")}
                     disabled=${answering}
                     onClick=${() => onAnswer(session.id, ask.id, false)}
                 >
-                    Decline
+                    ${t("Decline")}
                 </button>`
             }
             ${
@@ -1217,15 +1216,15 @@ function NeedAsk({ session, ask, steers, ownCall, answering, onAnswer }) {
                           disabled=${answering}
                           onClick=${() => onAnswer(session.id, ask.id, true)}
                       >
-                          Allow
+                          ${t("Allow")}
                       </button>`
                     : html`<button
                           class=${`need-button ${steers && !ask.form ? "" : "primary"}`}
                           data-part="session-ask-open"
-                          title="See the whole call where it waits"
+                          title=${t("See the whole call where it waits")}
                           onClick=${() => navigate(ask.conversationId)}
                       >
-                          Open
+                          ${t("Open")}
                       </button>`
             }
         </div>
@@ -2518,7 +2517,7 @@ function AllSessions({ compact = false }) {
                 query
                     ? html`<button
                         class="search-clear"
-                        aria-label="Clear"
+                        aria-label=${t("Clear")}
                         onClick=${() => setQuery("")}
                     >
                         <${Icon} name="close" size=${13} />
@@ -2629,21 +2628,21 @@ function AllSessions({ compact = false }) {
         </div>
         ${
             chosen.length > 0 &&
-            html`<div class="select-bar" role="group" aria-label="Selected sessions">
+            html`<div class="select-bar" role="group" aria-label=${t("Selected sessions")}>
                 <span class="select-count">
                     <b>${chosen.length}</b>
-                    <span class="select-word"> selected</span>
+                    <span class="select-word">${t("selected")}</span>
                 </span>
                 ${
                     canSteer() &&
                     html`<button class="button" onClick=${archiveChosen}>
-                        ${archived ? "Unarchive" : "Archive"}
+                        ${archived ? t("Unarchive") : t("Archive")}
                     </button>`
                 }
                 ${
                     !archived &&
                     html`<button class="button" onClick=${pinChosen}>
-                        ${allPinned ? "Unpin" : "Pin"}
+                        ${allPinned ? t("Unpin") : t("Pin")}
                     </button>`
                 }
                 ${extActions.map(
@@ -2661,8 +2660,8 @@ function AllSessions({ compact = false }) {
                 )}
                 <button
                     class="select-clear"
-                    title="Clear the selection (Esc)"
-                    aria-label="Clear the selection"
+                    title=${t("Clear the selection (Esc)")}
+                    aria-label=${t("Clear the selection")}
                     onClick=${clearSelection}
                 >
                     <${Icon} name="close" size=${14} />
@@ -2797,23 +2796,24 @@ function Rail({ foldable = false, folded = false }) {
     const { unread, peekSeen, server } = store.state;
     const needs = useMemo(() => needsYouCount(sessions), [sessions, unread, peekSeen, server]);
     const sessionsLabel =
-        needs > 0 ? `Sessions, ${needs} ${needs === 1 ? "needs" : "need"} you` : "Sessions";
+        needs > 0 ? t("Sessions, $ need you", needs) : t("Sessions");
     const needsBadge =
         needs > 0 && html`<span class="rail-count attn" data-part="rail-needs">${needs}</span>`;
     const keys = APPLE ? "⌘B" : "Ctrl+B";
     const fold = () => setPrefs({ sidebar: folded ? "open" : "rail" });
-    const role = me?.role === "owner" ? "owner" : me?.role === "viewer" ? "view only" : "guest";
+    const role =
+        me?.role === "owner" ? t("owner") : me?.role === "viewer" ? t("view only") : t("guest");
     // A rail with more buttons than room scrolls as a whole, and fades the edge where more is.
     const more = useScrollMore();
 
-    return html`<nav class="rail" data-part="rail" aria-label="Sessions and tools" ref=${more}>
+    return html`<nav class="rail" data-part="rail" aria-label=${t("Sessions and tools")} ref=${more}>
         ${
             foldable
                 ? html`<button
                     class="rail-brand"
                     data-part="brand-mark"
-                    title="Home"
-                    aria-label="Home"
+                    title=${t("Home")}
+                    aria-label=${t("Home")}
                     onClick=${toSessions}
                 >
                     π
@@ -2827,7 +2827,9 @@ function Rail({ foldable = false, folded = false }) {
                     class=${`rail-button ${folded ? "" : "on"}`}
                     data-part="rail-button"
                     data-state=${railState(!folded)}
-                    title=${`Sessions (${keys} ${folded ? "unfolds" : "folds"} the list)`}
+                    title=${
+                        folded ? t("Sessions ($ unfolds the list)", keys) : t("Sessions ($ folds the list)", keys)
+                    }
                     aria-label=${sessionsLabel}
                     aria-expanded=${!folded}
                     onClick=${fold}
@@ -2867,8 +2869,8 @@ function Rail({ foldable = false, folded = false }) {
             class=${`rail-button rail-running ${busy > 0 ? "lit" : ""} ${board === "running" ? "open" : ""}`}
             data-part="rail-button"
             data-state=${railState(board === "running", busy > 0)}
-            title="Running now"
-            aria-label=${busy > 0 ? `Running now, ${busy}` : "Running now"}
+            title=${t("Running now")}
+            aria-label=${busy > 0 ? t("Running now, $", busy) : t("Running now")}
             aria-pressed=${board === "running"}
             onPointerDown=${() => board !== "running" && prefetchRunning().catch(() => undefined)}
             onClick=${toggleRunning}
@@ -2880,7 +2882,7 @@ function Rail({ foldable = false, folded = false }) {
             class=${`rail-button rail-agents ${live > 0 ? "lit" : ""} ${board === "subagents" ? "open" : ""}`}
             data-part="rail-button"
             data-state=${railState(board === "subagents", live > 0)}
-            title="Subagents in every session"
+            title=${t("Subagents in every session")}
             aria-label=${[
                 "Subagents",
                 live > 0 && `${live} at work`,
@@ -2903,8 +2905,8 @@ function Rail({ foldable = false, folded = false }) {
             class="rail-button"
             data-part="rail-button"
             data-state=${railState(false, false)}
-            title="Artifacts in every session"
-            aria-label="All artifacts"
+            title=${t("Artifacts in every session")}
+            aria-label=${t("All artifacts")}
             onClick=${() => openSheet({ type: "all-artifacts" })}
         >
             <${Icon} name="artifact" size=${19} />
@@ -2915,8 +2917,8 @@ function Rail({ foldable = false, folded = false }) {
                 ? html`<button
                     class="rail-button"
                     data-part="rail-button"
-                    title=${canStart ? "People and invites" : "People"}
-                    aria-label="People"
+                    title=${canStart ? t("People and invites") : t("People")}
+                    aria-label=${t("People")}
                     onClick=${() => openSheet({ type: "people" })}
                 >
                     <${Icon} name="users" size=${19} />
@@ -2924,8 +2926,8 @@ function Rail({ foldable = false, folded = false }) {
                 : html`<button
                     class="rail-button"
                     data-part="rail-button"
-                    title="Sign in another device"
-                    aria-label="Devices"
+                    title=${t("Sign in another device")}
+                    aria-label=${t("Devices")}
                     onClick=${() => openSheet({ type: "invite" })}
                 >
                     <${Icon} name="users" size=${19} />
@@ -2936,8 +2938,8 @@ function Rail({ foldable = false, folded = false }) {
             html`<button
                 class="rail-button"
                 data-part="rail-button"
-                title="Model providers"
-                aria-label="Providers"
+                title=${t("Model providers")}
+                aria-label=${t("Providers")}
                 onClick=${() => openSheet({ type: "providers" })}
             >
                 <${Icon} name="key" size=${19} />
@@ -2946,8 +2948,8 @@ function Rail({ foldable = false, folded = false }) {
         <button
             class="rail-button"
             data-part="rail-button"
-            title="Theme, tiling, motion"
-            aria-label="Theme"
+            title=${t("Theme, tiling, motion")}
+            aria-label=${t("Theme")}
             onClick=${() => openSheet({ type: "appearance" })}
         >
             <${Icon} name="palette" size=${19} />
