@@ -36,6 +36,7 @@ import {
     LiveDoc,
     type LiveState,
     ProviderDoc,
+    type EntryRecord,
     type Registry,
     type Storage,
     type SubmissionRecord,
@@ -80,6 +81,7 @@ import {
     SubagentsDoc,
     TurnsDoc,
 } from "./docs.ts";
+import { CONTEXT_BLOCK } from "./entry-format.ts";
 import { describe, HttpError } from "./errors.ts";
 import { ExtensionCommands } from "./extension-commands.ts";
 import { ExtensionWebs, mayUse } from "./extension-web.ts";
@@ -160,6 +162,47 @@ import { Watches } from "./watches.ts";
 import { Workspace } from "./workspace.ts";
 
 const context = BACKGROUND_CONTEXT;
+
+/** The words of an entry, for the archive search: the role that spoke, its server time, and every text it holds. */
+function entryWords(entry: EntryRecord): { role: string; when: string; text: string } {
+    const said = entry as {
+        kind?: string;
+        model?: Array<{ role?: string; timestamp?: number; content?: unknown }>;
+    };
+    const parts: string[] = [];
+    let role = said.kind ?? "";
+    let when = "";
+
+    for (const message of said.model ?? []) {
+        if (message.role !== undefined && !role.startsWith("pi.")) {
+            role = message.role;
+        }
+
+        if (typeof message.timestamp === "number" && when === "") {
+            when = new Date(message.timestamp).toLocaleString("sv");
+        }
+
+        const content = message.content;
+
+        if (typeof content === "string") {
+            parts.push(content);
+        } else if (Array.isArray(content)) {
+            for (const part of content as Array<{ type?: string; text?: string; name?: string }>) {
+                if (
+                    part.type === "text" &&
+                    typeof part.text === "string" &&
+                    !part.text.startsWith(CONTEXT_BLOCK)
+                ) {
+                    parts.push(part.text);
+                } else if (part.type === "toolCall" && typeof part.name === "string") {
+                    parts.push(`(${part.name})`);
+                }
+            }
+        }
+    }
+
+    return { role, when, text: parts.join(" ") };
+}
 
 /** How other devices reach this server, as reported by the launcher (`bin/pi-pocket.js`). */
 export type AccessInfo = {
@@ -951,6 +994,10 @@ export class PocketApp {
             browsers: this.browsers,
             pip: this.pip,
             pipCompaction: this.pipCompaction,
+            history: {
+                search: (conversationId, query, scope, limit) =>
+                    this.searchHistory(conversationId, query, scope, limit),
+            },
             watches: this.watches,
             repoWatches: this.repoWatches,
             memory: this.memory,
@@ -2895,6 +2942,124 @@ export class PocketApp {
                 };
             })
             .sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+
+    /**
+     * The archive cabinet: the original entries a summary may have shortened, found by words. One conversation, every
+     * session, or one named session; a walk with a time and count budget, the matches cut around what matched.
+     */
+    async searchHistory(
+        conversationId: ConversationId,
+        query: string,
+        scope?: string,
+        limit?: number,
+    ): Promise<string> {
+        const needle = query.trim().toLowerCase();
+
+        if (needle === "") {
+            throw new HttpError(400, "Say what to search for.");
+        }
+
+        const cap = Math.max(1, Math.min(Math.round(limit ?? 10), 25));
+        const asked = (scope ?? "current").trim().toLowerCase();
+        const targets: { id: ConversationId; label: string }[] = [];
+
+        if (asked === "all") {
+            for (const session of this.sessions()) {
+                const marks = [
+                    session.channel ? "channel" : "",
+                    session.archived ? "archived" : "",
+                ]
+                    .filter(Boolean)
+                    .join(", ");
+
+                targets.push({
+                    id: Number(session.id) as ConversationId,
+                    label: `#${session.title ?? "untitled"}${marks === "" ? "" : ` (${marks})`}`,
+                });
+            }
+        } else if (/^\d+$/.test(asked)) {
+            const id = Number(asked) as ConversationId;
+            const meta = this.sessionMeta(id);
+
+            targets.push({ id, label: `#${meta?.title ?? asked}` });
+        } else {
+            const meta = this.sessionMeta(conversationId);
+
+            targets.push({
+                id: conversationId,
+                label: `#${meta?.title ?? "this conversation"}`,
+            });
+        }
+
+        const started = Date.now();
+        let walked = 0;
+        const found: string[] = [];
+
+        for (const target of targets) {
+            if (found.length >= cap || Date.now() - started > 8000) {
+                break;
+            }
+
+            let cursor: Cursor | undefined;
+            let walkedHere = 0;
+
+            try {
+                const conversation = await this.conversation(target.id);
+
+                do {
+                    const page = await conversation.entries({}, 200, cursor, context);
+
+                    for (const entry of page.items) {
+                        walkedHere++;
+                        const said = entryWords(entry);
+                        const at = said.text.toLowerCase().indexOf(needle);
+
+                        if (at === -1) {
+                            continue;
+                        }
+
+                        const from = Math.max(0, at - 90);
+                        const excerpt = said.text
+                            .slice(from, at + needle.length + 140)
+                            .replace(/\s+/g, " ")
+                            .trim();
+
+                        found.push(
+                            `[${target.label} · entry ${entry.id}${said.when === "" ? "" : ` · ${said.when}`}] (${said.role}) ${from > 0 ? "…" : ""}${excerpt}`,
+                        );
+
+                        if (found.length >= cap) {
+                            break;
+                        }
+                    }
+
+                    walked += page.items.length;
+                    cursor = page.next;
+                } while (
+                    cursor !== undefined &&
+                    walkedHere < 4000 &&
+                    Date.now() - started < 8000 &&
+                    found.length < cap
+                );
+            } catch {
+                // A session that cannot be read from here skips; the rest still answer.
+            }
+        }
+
+        const where =
+            targets.length === 1
+                ? `this conversation (${targets[0]!.label})`
+                : `${targets.length} sessions`;
+
+        if (found.length === 0) {
+            return `No match for ${JSON.stringify(query)} after reading ${walked} entries of ${where}. Try other words, a shorter form, or scope "all".`;
+        }
+
+        return [
+            `${found.length} match${found.length === 1 ? "" : "es"} for ${JSON.stringify(query)} (read ${walked} entries of ${where}; entry ids are stable, timestamps are server time):`,
+            ...found,
+        ].join("\n");
     }
 
     /**

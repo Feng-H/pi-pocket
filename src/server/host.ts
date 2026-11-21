@@ -657,6 +657,15 @@ export interface PocketHost {
     >;
     /** PiP's compactions: its extension's hook has PiP write its own summaries. */
     readonly pipCompaction: Pick<PipCompaction, "summarize">;
+    /** The archive cabinet: the original entries behind a summary, for the search_history tool (`extensions/history.ts`). */
+    readonly history: {
+        search(
+            conversationId: ConversationId,
+            query: string,
+            scope?: string,
+            limit?: number,
+        ): Promise<string>;
+    };
     /** Sessions' watches of their pull requests: Pi's watch_pr tool starts and stops them. */
     readonly watches: Pick<Watches, "task" | "start" | "stop" | "get">;
     /** Repository watches: the triggers extension runs their task; PiP's repo_watch tool sets them up. */

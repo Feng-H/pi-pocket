@@ -69,6 +69,7 @@ import type {
 type Internal =
     | "pip"
     | "pipCompaction"
+    | "history"
     | "gallery"
     | "updates"
     | "watches"
