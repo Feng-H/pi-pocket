@@ -65,6 +65,7 @@ export function helloUser(user: User) {
         name: user.name,
         role: user.role,
         ...(user.sessions === undefined ? {} : { sessions: user.sessions.map(Number) }),
+        stt: process.env.GROQ_API_KEY !== undefined && process.env.GROQ_API_KEY !== "",
     };
 }
 

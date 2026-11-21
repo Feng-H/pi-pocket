@@ -26,6 +26,7 @@ import { desktopTheme, wallpaperFile } from "../omarchy.ts";
 import { runningBoard, runningNow } from "../running.ts";
 import { serveImage } from "./assets.ts";
 import { browserRoutes } from "./browser-routes.ts";
+import { sttRoute } from "./stt-route.ts";
 import { conversationRoutes } from "./conversation-routes.ts";
 import { createEventStreams, keptPart } from "./events.ts";
 import { extensionRoute } from "./extension-routes.ts";
@@ -187,6 +188,11 @@ export function createApi(options: HttpOptions, auth: Auth) {
             app.setAvatar(user, undefined);
 
             return json(response, 200, { ok: true });
+        }
+
+        // Speech-to-text: the recorded audio goes to the server's Whisper, the words come back as text.
+        if (first === "stt" && method === "POST") {
+            return sttRoute(route);
         }
 
         // A picture of anyone this person may see in the people list.

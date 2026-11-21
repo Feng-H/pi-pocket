@@ -2,15 +2,17 @@
 // as they are heard and stay once the browser settles on them; nothing is ever sent by itself. Chrome sends the audio
 // to Google's servers to be recognised; Safari on iOS has it too; Firefox has none, and there the mic does not show.
 import { useEffect, useRef, useState } from "preact/hooks";
-import { notify } from "./store.js";
+import { notify, store } from "./store.js";
 import { html, Icon } from "./ui.js";
 
 /** The browser's recognizer, looked up when used (so a page can stand one in), or undefined where there is none. */
 const Recognizer = () => globalThis.SpeechRecognition ?? globalThis.webkitSpeechRecognition;
 
 /** Whether the mic can work here: a recognizer, and a page browsers give the microphone to (https, or this machine). */
+/** Whether the mic can work here: the server's Whisper (me.stt), or a recognizer on a page given the microphone. */
 export const voiceAvailable = () =>
-    globalThis.isSecureContext !== false && typeof Recognizer() === "function";
+    globalThis.isSecureContext !== false &&
+    (typeof Recognizer() === "function" || (store.state.me?.stt ?? false));
 
 /** What each of the recognizer's errors means for the person; those not here are named as they are. */
 const ERRORS = {
@@ -92,7 +94,7 @@ function join(before, words, after) {
  * selection `start`..`end`: it gives back `{ text, start, end }` (the text may change, a line added for them), or null
  * to leave them there (the session's box keeps them out of a quote).
  */
-export function useDictation(box, onText, { top = false, place = null } = {}) {
+export function useDictation(box, onText, { top = false, place = null, onError = null } = {}) {
     const [listening, setListening] = useState(false);
     const hear = useRef(onText);
     const where = useRef(place);
@@ -105,9 +107,23 @@ export function useDictation(box, onText, { top = false, place = null } = {}) {
         self.current = {
             box,
             top,
+            onError,
             recognition: null,
+            recorder: null,
             /** Stop listening: `drop` throws away what is not settled yet, and anything heard after. */
             stop(drop = false) {
+                if (this.recorder) {
+                    const recorder = this.recorder;
+
+                    if (drop) {
+                        this.recorder = null;
+                    }
+
+                    recorder.stop();
+
+                    return;
+                }
+
                 const recognition = this.recognition;
 
                 if (!recognition) {
@@ -131,10 +147,16 @@ export function useDictation(box, onText, { top = false, place = null } = {}) {
             start() {
                 const element = box.current;
                 const Recognition = Recognizer();
+                // The server's Whisper path: any browser that can record audio, whenever it is configured.
+                const server = store.state.me?.stt === true;
 
                 // A read-only box's words are not to change (a send on its way holds them).
-                if (!element || element.readOnly || typeof Recognition !== "function") {
+                if (!element || element.readOnly || (server === false && typeof Recognition !== "function")) {
                     return;
+                }
+
+                if (server) {
+                    return this.startRecording();
                 }
 
                 current?.stop();
@@ -303,10 +325,119 @@ export function useDictation(box, onText, { top = false, place = null } = {}) {
                 }
             },
             toggle() {
-                if (this.recognition) {
+                if (this.recorder || this.recognition) {
                     this.stop();
                 } else {
                     this.start();
+                }
+            },
+
+            /** Record into a chunked MediaRecorder; the transcription lands when the person stops. */
+            startRecording() {
+                if (typeof MediaRecorder === "undefined" || navigator.mediaDevices === undefined) {
+                    notify("error", "This browser cannot record audio for dictation.");
+
+                    return;
+                }
+
+                const mime =
+                    ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((each) =>
+                        MediaRecorder.isTypeSupported(each),
+                    ) ?? "";
+
+                if (mime === "") {
+                    notify("error", "This browser cannot record audio for dictation.");
+
+                    return;
+                }
+
+                navigator.mediaDevices
+                    .getUserMedia({ audio: true })
+                    .then((stream) => {
+                        const recorder = new MediaRecorder(stream, { mimeType: mime });
+                        const chunks = [];
+
+                        recorder.ondataavailable = (event) => {
+                            if (event.data.size > 0) {
+                                chunks.push(event.data);
+                            }
+                        };
+
+                        recorder.onstop = () => {
+                            stream.getTracks().forEach((track) => track.stop());
+
+                            if (this.recorder !== recorder) {
+                                return;
+                            }
+
+                            this.recorder = null;
+
+                            this.transcribe(new Blob(chunks, { type: mime }));
+                        };
+
+                        this.recorder = recorder;
+                        recorder.start();
+                        setListening(true);
+                    })
+                    .catch(() => {
+                        notify("error", "No microphone found, or its use is blocked for this site.");
+                    });
+            },
+
+            /** The recording goes to the server's Whisper, and the words land where dictation would put them. */
+            async transcribe(blob) {
+                const element = this.box.current;
+
+                try {
+                    const out = await fetch("/api/stt", {
+                        method: "POST",
+                        headers: { "content-type": blob.type || "audio/webm", "x-pocket": "1" },
+                        body: blob,
+                    });
+
+                    if (!out.ok) {
+                        const data = await out.json().catch(() => undefined);
+                        const message = data?.error ?? `Transcription failed (${out.status}).`;
+
+                        notify(out.status === 501 ? "info" : "error", message);
+
+                        return;
+                    }
+
+                    const data = await out.json();
+                    const words = String(data.text ?? "").trim();
+
+                    if (element === null || element.readOnly) {
+                        return;
+                    }
+
+                    if (words === "") {
+                        notify("info", "No speech heard. Tap the mic and try again.");
+
+                        return;
+                    }
+
+                    const focused = () => document.activeElement === element;
+                    const at = focused() ? element.selectionStart : element.value.length;
+                    const end = focused() ? element.selectionEnd : at;
+                    const placed = this.where.current?.(element.value, at, end) ?? {
+                        text: element.value,
+                        start: at,
+                        end,
+                    };
+                    const { value, at: caret } = join(
+                        placed.text.slice(0, placed.start),
+                        words,
+                        placed.text.slice(placed.end),
+                    );
+
+                    element.value = value;
+                    element.setSelectionRange(caret, caret);
+                    this.hear.current(value, caret);
+                } catch (error) {
+                    notify("error", `Dictation failed: ${error.message ?? error}`);
+                } finally {
+                    setListening(false);
                 }
             },
         };
