@@ -5856,6 +5856,17 @@ pre.diff .del {
     color: var(--muted);
 }
 
+/* An archived channel in the # mention's list: its name reads muted, and a small word says it is closed. */
+.channel-archived {
+    flex: none;
+    margin-left: auto;
+    padding: 1px 5px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    font: 10px/1.4 var(--mono);
+    color: var(--faint);
+}
+
 /* The language a voice message goes out as, beside its mic: a small chip that cycles on a tap. */
 .voice-lang {
     margin-right: 4px;

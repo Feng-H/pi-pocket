@@ -1275,7 +1275,6 @@ export class Commands {
             .filter(
                 (session) =>
                     session.channel === true &&
-                    session.archived !== true &&
                     tokens.includes((session.title ?? "").toLowerCase()),
             );
 
@@ -1286,8 +1285,9 @@ export class Commands {
         const lines = channels.map((session) => {
             const title = (session.title ?? "").replace(/[\n>"]/g, " ");
             const folder = session.cwd.replace(/[\n>"]/g, " ");
+            const closed = session.archived === true ? " (archived: closed, but its history remains)" : "";
 
-            return `#${title} is channel session ${session.id}, in ${folder}.`;
+            return `#${title} is channel session ${session.id}, in ${folder}${closed}.`;
         });
 
         return [
