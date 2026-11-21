@@ -20,6 +20,7 @@ import { openPip, pipAvailable } from "./pip.js";
 import { setArchived, toggleBoard } from "./sessions.js";
 import { branchAvailable, headLabel } from "./sheets/branch.js";
 import { recentLabels } from "./sheets/folder.js";
+import { t } from "./i18n.js";
 import { galleryAvailable } from "./sheets/gallery.js";
 import { memoryAvailable } from "./sheets/memory.js";
 import { piSessionsAvailable } from "./sheets/pi-sessions.js";
@@ -408,7 +409,7 @@ function actionItems() {
         conversation && {
             label: "Copy link to this session",
             icon: "external",
-            run: () => copyText(location.href).then(() => notify("info", "Link copied.")),
+            run: () => copyText(location.href).then(() => notify("info", t("Link copied."))),
         },
         conversation && {
             label: "Session menu",
@@ -524,7 +525,7 @@ function actionItems() {
         ...(canStart
             ? folderFavorites.map((path, index) => ({
                   key: `action:new-favorite:${path}`,
-                  label: `New session in ${favoriteNames[index]}`,
+                  label: t(`New session in $`, favoriteNames[index]),
                   detail: shortPath(path, server?.home),
                   icon: "star",
                   run: () =>
@@ -537,12 +538,22 @@ function actionItems() {
             : []),
     ];
 
-    return list.filter(Boolean).map((item) => ({
-        ...item,
-        kind: "action",
-        key: item.key ?? `action:${item.label}`,
-        text: `${item.label} ${item.detail ?? ""} ${item.keywords ?? ""}`,
-    }));
+    return list.filter(Boolean).map((item) => {
+        const label = t(item.label);
+        const detail = item.detail === undefined ? item.detail : t(item.detail);
+
+        return {
+            ...item,
+            kind: "action",
+            key: item.key ?? `action:${item.label}`,
+            label,
+            detail,
+            // What the fuzzy matcher reads: the words shown, and the English words behind them, so either finds it.
+            text: `${label} ${label === item.label ? "" : `${item.label} `}${detail ?? ""} ${
+                item.keywords ?? ""
+            }`,
+        };
+    });
 }
 
 function sessionItems() {
@@ -560,13 +571,13 @@ function sessionItems() {
         return {
             kind: "session",
             key: `session:${session.id}`,
-            label: session.title ?? "New session",
+            label: session.title ?? t("New session"),
             detail: shortPath(session.cwd, server?.home),
             status:
                 [
-                    session.id === openId() ? "Current" : null,
-                    session.waiting ? "Waiting" : session.busy ? "Working" : null,
-                    session.archived ? "Archived" : null,
+                    session.id === openId() ? t("Current") : null,
+                    session.waiting ? t("Waiting") : session.busy ? t("Working") : null,
+                    session.archived ? t("Archived") : null,
                 ]
                     .filter(Boolean)
                     .join(" · ") || timeAgo(session.updatedAt),
@@ -596,7 +607,7 @@ function lookItems() {
             kind: "theme",
             key: `look:${look.id}`,
             label: look.name,
-            detail: look.builtIn ? "theme, built in" : "theme",
+            detail: look.builtIn ? t("theme, built in") : t("theme"),
             text: `theme ${look.name} ${look.id}`,
             look: look.id,
             vars,
@@ -709,8 +720,8 @@ export function Launcher({ leaving, returnTo }) {
             const matchNote =
                 match.hits.length > 0 && hits.length === 0 && detailHits.length === 0
                     ? item.kind === "theme"
-                        ? "Theme name or ID match"
-                        : (item.words?.find((word) => word.includes(needle)) ?? "Keyword match")
+                        ? t("Theme name or ID match")
+                        : (item.words?.find((word) => word.includes(needle)) ?? t("Keyword match"))
                     : null;
 
             scored.push({
@@ -1080,7 +1091,7 @@ export function Launcher({ leaving, returnTo }) {
                 <input
                     ref=${input}
                     value=${query}
-                    placeholder="Sessions, actions, themes…"
+                    placeholder=${t("Sessions, actions, themes…")}
                     aria-label="Search sessions, actions, and themes"
                     autocomplete="off"
                     autocapitalize="none"
@@ -1104,10 +1115,10 @@ export function Launcher({ leaving, returnTo }) {
                 aria-label="Search type"
             >
                 ${[
-                    ["", "All"],
-                    ["@", "Sessions"],
-                    [">", "Actions"],
-                    ["#", "Themes"],
+                    ["", t("All")],
+                    ["@", t("Sessions")],
+                    [">", t("Actions")],
+                    ["#", t("Themes")],
                 ].map(
                     ([token, label]) => html`<button
                         aria-pressed=${(prefix ? query[0] : "") === token}
@@ -1125,7 +1136,7 @@ export function Launcher({ leaving, returnTo }) {
                     aria-label="Recent session options"
                 >
                     <div class="launcher-group" data-part="launcher-group">
-                        <span id="launcher-group-session">Recent sessions</span>
+                        <span id="launcher-group-session">${t("Recent sessions")}</span>
                         <span class="launcher-count">
                             ${recent.items.length} of ${recent.total}
                         </span>
@@ -1140,7 +1151,7 @@ export function Launcher({ leaving, returnTo }) {
                 id="launcher-results"
                 ref=${list}
                 role="listbox"
-                aria-label="Search results"
+                aria-label=${t("Search results")}
             >
                 ${groups.map(
                     (group) => html`
@@ -1151,14 +1162,14 @@ export function Launcher({ leaving, returnTo }) {
                                     <span id=${`launcher-group-${group.kind}`}>
                                         ${
                                             group.kind === "session" && recent
-                                                ? "Recent sessions"
-                                                : GROUP_NAMES[group.kind]
+                                                ? t("Recent sessions")
+                                                : t(GROUP_NAMES[group.kind])
                                         }
                                     </span>
                                     <span class="launcher-count">
                                         ${group.items.length}${
                                             group.total > group.items.length
-                                                ? ` of ${group.total}`
+                                                ? ` / ${group.total}`
                                                 : ""
                                         }
                                     </span>
@@ -1298,7 +1309,7 @@ export function Launcher({ leaving, returnTo }) {
                     <kbd>></kbd> actions <kbd>@</kbd> sessions <kbd>#</kbd> themes
                 </span>
                 <span class="launcher-touch-help">
-                    Tap a result · > actions, @ sessions, # themes
+                    ${t("Tap a result · > actions, @ sessions, # themes")}
                 </span>
             </div>
         </section>
