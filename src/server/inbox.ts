@@ -1,4 +1,4 @@
-/** The one path by which outside data (a webhook's post, a relay's message) reaches a session as a person's message. */
+/** The one path by which outside data (a webhook's post) reaches a session as a person's message. */
 import { createHash } from "node:crypto";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { ConversationId } from "@earendil-works/pi-durable";

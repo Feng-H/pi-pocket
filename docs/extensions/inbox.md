@@ -9,8 +9,7 @@ An extension can give data from outside the app to a session. Examples are a cha
 Use `host.inbox` when text that people you do not know wrote must reach Pi. It does the safe work for you: it fences the text as data, checks who Pi works for, delivers once, and caps the rate.
 
 - Do not use it for a message that a person of this app wrote. Use [`host.sessions.start`](sessions.md) or [`host.linkedSessions`](linked-sessions.md).
-- Do not use it to let a service connect to a chat or a feed. The [relay](relay.md) does that, and it delivers through this same call.
-- Webhooks (Menu → **Webhooks and watches**) use this call too. A post to a hook and an event from the relay reach Pi the same way.
+- Webhooks (Menu → **Webhooks and watches**) use this call too. A post to a hook reaches Pi directly.
 
 ## An example
 
@@ -102,9 +101,9 @@ A `key` delivers once. A second delivery with the same `key` to the same session
 - The cap is 600 an hour at most, whatever you ask for. Without `limit`, a source has no cap of its own.
 - The count is in memory. A restart forgives it.
 - A message that did not go gives its place back.
-- Past the cap, `deliver` throws a 429. Decide what that means for the source: the relay drops the event and counts it.
+- Past the cap, `deliver` throws a 429. Decide what that means for the source: drop the event and count it.
 
-Do not rely on the cap alone. A source that you do not trust needs a smaller limit for each author, as the relay has.
+Do not rely on the cap alone. A source that you do not trust needs a smaller limit for each author.
 
 ## The fence
 
@@ -135,7 +134,7 @@ Rules that follow:
 
 The 409 says no more: the reason is in the server's log, with the label, and not in the error. This is so that a source cannot learn how the session is used.
 
-Keep what you could not deliver on disk, and try again later with the same key and with a longer wait each time. The relay does this with its queue.
+Keep what you could not deliver on disk, and try again later with the same key and with a longer wait each time.
 
 ## Security notes
 
