@@ -50,6 +50,7 @@ import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite
 import { createNodePhotonImages } from "@earendil-works/pi-durable/images/node";
 import { CodingTools, createCodingTools } from "@earendil-works/pi-durable/tools";
 import { Alerts } from "./alerts.ts";
+import { sweepAssets } from "./artifacts.ts";
 import { Attribution, type Missing } from "./attribution.ts";
 import { Browsers } from "./browser.ts";
 import type { BrowserState } from "./browser/page.ts";
@@ -1150,6 +1151,10 @@ export class PocketApp {
         // Work a previous process left unfinished continues now.
         this.harness.resume();
         void this.sessionCleanup.resume();
+        // Asset bytes that a deleted artifact left, if a restart cut its sweep off (`artifacts.ts`).
+        void sweepAssets(this).catch((error: unknown) =>
+            this.#log(`Unused artifact assets could not be removed: ${describe(error)}`),
+        );
     }
 
     /**
