@@ -830,7 +830,7 @@ function SessionRow({
     });
     // A finger held on it, before its actions open: the list's press sets it, and only this row draws again.
     const [pressing, setPressing] = useState(false);
-    const title = session.title ?? "New session";
+    const title = session.channel === true ? `#${session.title ?? ""}` : session.title ?? "New session";
     const path = shortPath(session.cwd, home);
     const where = [
         session.worktree ? `${path} ⎇ ${session.worktree.branch}` : path,

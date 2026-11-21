@@ -33,6 +33,8 @@ export type SessionMeta = {
     updatedAt: number;
     createdBy?: string;
     archived?: boolean;
+    /** A Discord-style channel: a long-lived conversation in the sidebar's channels section, open to schedules and webhooks. */
+    channel?: true;
     /** The session this one was forked from, and the last entry it inherited; no entry: forked before the first message. */
     forkedFrom?: { id: number; entryId?: number };
     /** The session that started this one (`linked-sessions.ts`): a link only, which gives no access and owns nothing. */

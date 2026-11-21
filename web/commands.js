@@ -181,6 +181,23 @@ async function newSession(arg) {
     navigate(created.id);
 }
 
+/** A channel: a long-lived session the agent answers in, shown as #name in the list. */
+async function newChannel(arg) {
+    const name = (arg ?? "").trim().replace(/^#/, "");
+
+    if (name === "") {
+        return notify("info", "Say the channel name, such as /channel general.");
+    }
+
+    const created = await actions.createSession(agent()?.cwd, {
+        channel: true,
+        title: name,
+    });
+
+    navigate(created.id);
+    notify("info", `频道 #${name} 已创建,Agent 会在这里自动回复。`);
+}
+
 async function copyLast() {
     const { view } = store.state;
 
@@ -258,6 +275,13 @@ const COMMANDS = [
         description: "Start a new session in this folder",
         available: () => !scoped(),
         run: newSession,
+    },
+    {
+        name: "channel",
+        args: "[name]",
+        description: "Create a channel the agent answers in (#name)",
+        available: () => !scoped(),
+        run: newChannel,
     },
     {
         name: "name",

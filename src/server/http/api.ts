@@ -591,15 +591,18 @@ export function createApi(options: HttpOptions, auth: Auth) {
         }
 
         if (first === "sessions" && second === undefined && method === "POST") {
-            const body = await readJson<{ cwd?: string; title?: string; worktree?: unknown }>(
-                request,
-            );
+            const body = await readJson<{
+                cwd?: string;
+                title?: string;
+                channel?: unknown;
+                worktree?: unknown;
+            }>(request);
 
             return json(response, 200, await app.commands.createSession(user, body));
         }
 
         if (first === "sessions" && second !== undefined && method === "POST") {
-            const body = await readJson<{ title?: string; archived?: boolean }>(request);
+            const body = await readJson<{ title?: string; archived?: boolean; channel?: unknown }>(request);
 
             const { repeating } = await app.commands.updateSession(
                 conversationId(second),

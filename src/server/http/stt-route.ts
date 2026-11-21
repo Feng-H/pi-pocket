@@ -35,7 +35,7 @@ export async function sttRoute({
     const type = String(request.headers["content-type"] ?? "audio/webm");
     const form = new FormData();
 
-    form.append("file", new Blob([audio], { type }), "speech.webm");
+    form.append("file", new Blob([new Uint8Array(audio)], { type }), "speech.webm");
     form.append("model", MODEL);
     form.append("response_format", "json");
 

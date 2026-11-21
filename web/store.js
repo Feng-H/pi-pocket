@@ -2863,8 +2863,16 @@ export const actions = {
     approve: (id, allow, values) =>
         api(`approvals/${encodeURIComponent(id)}`, { allow, ...(values ? { values } : {}) }),
     /** `worktree`: the session works in a git worktree of its own, made from the folder. */
-    createSession: (cwd, { worktree = false } = {}) =>
-        api("sessions", { cwd, ...(worktree ? { worktree } : {}) }),
+    createSession: (
+        cwd,
+        { worktree = false, channel = false, title = undefined } = {},
+    ) =>
+        api("sessions", {
+            cwd,
+            ...(title !== undefined ? { title } : {}),
+            ...(worktree ? { worktree } : {}),
+            ...(channel ? { channel: true } : {}),
+        }),
     updateSession: (id, patch) => api(`sessions/${id}`, patch),
     upload: (file) => api(`c/${current()}/upload?name=${encodeURIComponent(file.name)}`, file),
     fullEntry: (entryId) => api(`c/${current()}/entry/${entryId}`),

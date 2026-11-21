@@ -406,7 +406,7 @@ export class Commands {
     /** Start a session in a folder; with `worktree`, in a git worktree of its own made from that folder. */
     async createSession(
         user: User,
-        request: { cwd?: string; title?: string; worktree?: unknown },
+        request: { cwd?: string; title?: string; channel?: unknown; worktree?: unknown },
         {
             projectDefaults = true,
             model,
@@ -431,6 +431,7 @@ export class Commands {
 
         const given = optionalText(request.title, "title");
         const title = (given === undefined ? undefined : oneLine(given)) || undefined;
+        const channel = request.channel === true;
         const requested = optionalText(request.cwd, "cwd") ?? app.defaultCwd;
 
         app.requireWorkspaceOwner(user, requested);
@@ -478,6 +479,7 @@ export class Commands {
                                 updatedAt: now,
                                 createdBy: user.id,
                                 ...(title === undefined ? {} : { title }),
+                                ...(channel ? { channel: true } : {}),
                                 ...(worktree === undefined ? {} : { worktree }),
                             };
                             await init?.(tx, id);
@@ -727,7 +729,7 @@ export class Commands {
     async updateSession(
         id: ConversationId,
         user: User,
-        patch: { title?: string; archived?: boolean },
+        patch: { title?: string; archived?: boolean; channel?: unknown },
     ): Promise<{ repeating: number }> {
         const app = this.#app;
 
@@ -737,6 +739,10 @@ export class Commands {
 
         if (patch.archived !== undefined && typeof patch.archived !== "boolean") {
             throw new HttpError(400, "archived must be true or false");
+        }
+
+        if (patch.channel !== undefined && patch.channel !== true) {
+            throw new HttpError(400, "channel can only be turned on");
         }
 
         const before = app.sessionMeta(id);
@@ -757,6 +763,10 @@ export class Commands {
 
             if (patch.archived !== undefined) {
                 meta.archived = patch.archived;
+            }
+
+            if (patch.channel === true && meta.channel === undefined) {
+                meta.channel = true;
             }
         }, context);
         const title = patch.title === undefined ? undefined : oneLine(patch.title);
