@@ -25,8 +25,9 @@ A durable, multiplayer, mobile-first web app for Pi agents, built on Pi Durable.
 
 - Discord 式长驻频道:`/channel 名字` 创建,侧栏 **CHANNELS** 分组收纳,分组头带 `+` 直接新建
 - 重名校验:同名频道服务端直接拒绝(409),大小写、`#`、首尾空格归一化
-- 可随时重命名(长按 → 重命名);归档的频道**仍可被 `#` 引用**,候选里带"归档"标记
-- English: Discord-style long-lived conversations with a CHANNELS section and a `+` to create; unique names (the server refuses a second, whatever the case); channels rename like any session; archived ones stay mentionable, marked as archived.
+- 可随时重命名(长按 → 重命名);归档的频道**仍可被 `#` 引用**,候选里带“归档”标记
+- 归档会话可**真正删除**(源自上游 0.30 的 Session cleanup,所有者专属):移出应用并清理 worktree/上传文件/后台日志,转录保留在 durable 存储
+- English: Discord-style long-lived conversations with a CHANNELS section and a `+` to create; unique names (the server refuses a second, whatever the case); channels rename like any session; archived ones stay mentionable, marked as archived; archived sessions can be truly removed (owner-only, adopted from upstream 0.30).
 
 ### `#` 频道引用与跨频道推送 / Mentions & posts
 
