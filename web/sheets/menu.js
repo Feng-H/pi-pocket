@@ -36,6 +36,7 @@ import { branchAvailable } from "./branch.js";
 import { memoryAvailable, memoryHint, useMemory } from "./memory.js";
 import { defaultLabel, defaultsKept } from "./model.js";
 import { copyText, html, Icon, item, PlaceTile, Sheet, shortPath } from "../ui.js";
+import { t } from "../i18n.js";
 
 // Key hints are for people with a keyboard: a touch screen has none.
 const touch = matchMedia("(pointer: coarse)").matches;
@@ -116,7 +117,7 @@ const PLACES = [
                 filesAvailable() && {
                     icon: "diff",
                     count,
-                    counted: count === 1 ? "changed file" : "changed files",
+                    counted: count === 1 ? t("changed file") : t("changed files"),
                     on: store.state.filesOpen && store.state.filesTab === "changes",
                     run: () => setFilesOpen(true, "changes"),
                 }
@@ -158,7 +159,7 @@ const PLACES = [
             collab() && {
                 icon: "chat",
                 count: chatUnread(),
-                counted: "unread",
+                counted: t("unread"),
                 run: () => openSheet({ type: "chat" }),
             },
     },
@@ -193,7 +194,7 @@ const PLACES = [
             pipAvailable() && {
                 icon: "pip",
                 dot: pipUnread(),
-                dotLabel: "something new",
+                dotLabel: t("something new"),
                 run: () => {
                     openPip();
                     closeSheet();
@@ -226,14 +227,14 @@ PLACES.forEach(({ id, label, place }, index) =>
             // As before slots: `data-place="files"`, which tests and themes may select.
             return (
                 shown &&
-                html`<${PlaceTile} place=${{ id: id.replace(/^core:/, ""), label, ...shown }} />`
+                html`<${PlaceTile} place=${{ id: id.replace(/^core:/, ""), label: t(label), ...shown }} />`
             );
         },
     }),
 );
 
 function PlacesGrid({ changes = null }) {
-    return html`<nav class="places" aria-label="Places">
+    return html`<nav class="places" aria-label=${t("Places")}>
         ${slotItems("places", { changes }).map(({ node }) => node)}
     </nav>`;
 }
@@ -246,12 +247,12 @@ export function PlacesSheet() {
     const conversation = store.state.view.conversation;
 
     return html`<${Sheet}
-        title=${conversation?.title ?? "Open"}
+        title=${conversation?.title ?? t("Open")}
         onClose=${closeSheet}
         className="places-sheet"
     >
         <${Places} />
-        ${item("Session menu", () => openSheet({ type: "menu", fromPlaces: true }), "rename, context, settings")}
+        ${item(t("Session menu"), () => openSheet({ type: "menu", fromPlaces: true }), t("rename, context, settings"))}
     <//>`;
 }
 
@@ -424,7 +425,7 @@ export function MenuSheet({ places = true }) {
     // The embedder this page runs in adds its own group at the end, below App, under its own title (`embedder.js`).
     const embedder = hostMenu();
 
-    return html`<${MenuFrame} title=${conversation?.title ?? "Menu"}>
+    return html`<${MenuFrame} title=${conversation?.title ?? t("Menu")}>
         ${places && html`<${Places} />`}
         <div class="menu-session">
             ${
@@ -432,45 +433,45 @@ export function MenuSheet({ places = true }) {
                 collab() &&
                 canToggleTurns() &&
                 item(
-                    turns?.on ? "Turn off take turns" : "Take turns",
+                    turns?.on ? t("Turn off take turns") : t("Take turns"),
                     () =>
                         attempt(async () => {
                             await actions.turns(turns?.on ? "off" : "on");
                             closeSheet();
                         }),
                     turns?.on
-                        ? "anyone here can send to Pi again"
-                        : "one person drives Pi at a time",
+                        ? t("anyone here can send to Pi again")
+                        : t("one person drives Pi at a time"),
                 )
             }
-            ${session && steer && item("Rename", () => openSheet({ type: "rename" }))}
+            ${session && steer && item(t("Rename"), () => openSheet({ type: "rename" }))}
             ${
                 session &&
                 item(
-                    isPinned(conversation.id) ? "Unpin from the top" : "Pin to the top",
+                    t(isPinned(conversation.id) ? "Unpin from the top" : "Pin to the top"),
                     () => {
                         togglePin(conversation.id);
                         closeSheet();
                     },
-                    "this browser",
+                    t("this browser"),
                 )
             }
             ${
                 session &&
                 item(
-                    "Mark unread",
+                    t("Mark unread"),
                     () => {
                         setUnread(conversation.id, true);
                         closeSheet();
                         navigate(null);
                     },
-                    "this browser; opening it again clears it",
+                    t("this browser; opening it again clears it"),
                 )
             }
             ${
                 conversation?.worktree && steer
                     ? item(
-                          "Worktree",
+                          t("Worktree"),
                           () => openSheet({ type: "worktree" }),
                           conversation.worktree.branch,
                       )
@@ -479,7 +480,7 @@ export function MenuSheet({ places = true }) {
                       driving &&
                       !scoped() &&
                       item(
-                          "Working directory",
+                          t("Working directory"),
                           () => openSheet({ type: "cwd", mode: "change" }),
                           shortPath(view.agent?.cwd, server?.home),
                       )
@@ -489,7 +490,7 @@ export function MenuSheet({ places = true }) {
                 browserAvailable() &&
                 store.state.browserOpen &&
                 item(
-                    "Close the browser",
+                    t("Close the browser"),
                     () => {
                         setBrowserOpen(false);
                         closeSheet();
@@ -497,46 +498,46 @@ export function MenuSheet({ places = true }) {
                     store.state.browser?.open && displayUrl(store.state.browser.url),
                 )
             }
-            ${conversation && trustAvailable() && item("Project trust", () => openSheet({ type: "trust" }), trustHint())}
+            ${conversation && trustAvailable() && item(t("Project trust"), () => openSheet({ type: "trust" }), trustHint())}
             ${session && extensionMenuItems("session").map((each) => item(each.label, each.run, each.hint))}
-            ${session && steer && driving && item("Instructions for Pi", () => openSheet({ type: "instructions" }), instructions ? "on" : "none")}
-            ${conversation && steer && driving && item("Compact context", () => openSheet({ type: "compact" }), "summarize older messages")}
-            ${conversation && steer && driving && item("New context", () => openSheet({ type: "reset" }), "Pi starts fresh; history stays")}
-            ${conversation && memoryAvailable() && item("Memory", () => openSheet({ type: "memory" }), memoryHint(memory))}
-            ${schedulesAvailable() && item("Scheduled messages", () => openSheet({ type: "schedules" }), schedulesHint(view.schedules))}
+            ${session && steer && driving && item(t("Instructions for Pi"), () => openSheet({ type: "instructions" }), instructions ? t("on") : t("none"))}
+            ${conversation && steer && driving && item(t("Compact context"), () => openSheet({ type: "compact" }), t("summarize older messages"))}
+            ${conversation && steer && driving && item(t("New context"), () => openSheet({ type: "reset"}), t("Pi starts fresh; history stays"))}
+            ${conversation && memoryAvailable() && item(t("Memory"), () => openSheet({ type: "memory" }), memoryHint(memory))}
+            ${schedulesAvailable() && item(t("Scheduled messages"), () => openSheet({ type: "schedules" }), schedulesHint(view.schedules))}
             ${
                 watchAvailable() &&
                 steer &&
                 view.watch?.status !== "watching" &&
                 item(
-                    "Watch pull request",
+                    t("Watch pull request"),
                     () => {
                         closeSheet();
                         attempt(() => watchPr());
                     },
-                    "fix CI, answer reviews",
+                    t("fix CI, answer reviews"),
                 )
             }
             ${
                 conversation &&
-                item("Copy link", () =>
+                item(t("Copy link"), () =>
                     copyText(location.href).then(
-                        () => notify("info", "Link copied. Other signed-in devices can open it."),
-                        () => notify("error", "Could not copy."),
+                        () => notify("info", t("Link copied. Other signed-in devices can open it.")),
+                        () => notify("error", t("Could not copy.")),
                     ),
                 )
             }
             ${
                 conversation &&
                 html`<a class="list-item" href=${`/api/c/${conversation.id}/export`} download>
-                    <span>Export as Markdown</span>
-                    <span class="muted small">the whole history</span>
+                    <span>${t("Export as Markdown")}</span>
+                    <span class="muted small">${t("the whole history")}</span>
                 </a>`
             }
             ${
                 session &&
                 steer &&
-                item(conversation.archived ? "Unarchive" : "Archive", () => {
+                item(t(conversation.archived ? "Unarchive" : "Archive"), () => {
                     closeSheet();
                     setArchived([conversation.id], !conversation.archived);
                 })
@@ -545,56 +546,56 @@ export function MenuSheet({ places = true }) {
         ${
             view.subagents.length > 0 &&
             html`<div class="group">
-                <div class="group-title">Subagents</div>
+                <div class="group-title">${t("Subagents")}</div>
                 ${view.subagents.map((agent) =>
                     item(
                         html`${agent.busy ? html`<span class="pulse"></span> ` : ""}${agent.name}`,
                         () => openSubagent(agent.conversationId),
-                        agent.busy ? "working" : "idle",
+                        agent.busy ? t("working") : t("idle"),
                     ),
                 )}
             </div>`
         }
         <div class="group">
-            <div class="group-title">App</div>
-            ${item("Appearance", () => openSheet({ type: "appearance" }), lookLabel())}
-            ${!touch && item("Keyboard shortcuts", () => openSheet({ type: "shortcuts" }), "?")}
+            <div class="group-title">${t("App")}</div>
+            ${item(t("Appearance"), () => openSheet({ type: "appearance" }), lookLabel())}
+            ${!touch && item(t("Keyboard shortcuts"), () => openSheet({ type: "shortcuts" }), "?")}
             ${
                 me?.role === "owner" &&
                 defaultsKept() &&
                 item(
-                    "Default model",
+                    t("Default model"),
                     () => openSheet({ type: "model", id: "default", forDefault: true }),
                     defaultLabel(server?.defaultModel, store.state.models) ||
-                        "project, last picked, then Pi global",
+                        t("project, last picked, then Pi global"),
                 )
             }
-            ${item("Your name", () => openSheet({ type: "name" }), me?.name)}
-            ${collab() ? item("People", () => openSheet({ type: "people" }), me?.role === "viewer" ? "you can view" : "") : item("Sign in another device", () => openSheet({ type: "invite" }))}
-            ${collab() && item("Notifications", () => openSheet({ type: "notifications" }), "Pi finished, approvals, chat")}
-            ${item("Running now", openRunning, "everything Pi is doing")}
-            ${view.conversation && item("Background", () => openSheet({ type: "background" }), "what commands print as they run")}
-            ${item("Spend", () => openSheet({ type: "spend" }), me?.role === "owner" ? "by person and session, limits" : "yours")}
-            ${triggersOn() && me?.role !== "viewer" && item("Webhooks and watches", () => openSheet({ type: "hooks" }), "GitHub, other services")}
-            ${me?.role === "owner" && item("Providers", () => openSheet({ type: "providers" }))}
-            ${modelRefreshAvailable() && item("Refresh models", refreshModels, store.state.modelRefresh.loading ? "refreshing…" : "models.json and providers")}
+            ${item(t("Your name"), () => openSheet({ type: "name" }), me?.name)}
+            ${collab() ? item(t("People"), () => openSheet({ type: "people" }), me?.role === "viewer" ? t("you can view") : "") : item(t("Sign in another device"), () => openSheet({ type: "invite" }))}
+            ${collab() && item(t("Notifications"), () => openSheet({ type: "notifications" }), t("Pi finished, approvals, chat"))}
+            ${item(t("Running now"), openRunning, t("everything Pi is doing"))}
+            ${view.conversation && item(t("Background"), () => openSheet({ type: "background" }), t("what commands print as they run"))}
+            ${item(t("Spend"), () => openSheet({ type: "spend" }), me?.role === "owner" ? t("by person and session, limits") : t("yours"))}
+            ${triggersOn() && me?.role !== "viewer" && item(t("Webhooks and watches"), () => openSheet({ type: "hooks" }), t("GitHub, other services"))}
+            ${me?.role === "owner" && item(t("Providers"), () => openSheet({ type: "providers" }))}
+            ${modelRefreshAvailable() && item(t("Refresh models"), refreshModels, store.state.modelRefresh.loading ? t("refreshing…") : t("models.json and providers"))}
             ${extensionMenuItems().map((each) => item(each.label, each.run, each.hint))}
-            ${item("Extensions", () => openSheet({ type: "extensions" }), extensionsHint())}
+            ${item(t("Extensions"), () => openSheet({ type: "extensions" }), extensionsHint())}
             ${
                 me?.role === "owner" &&
                 server?.supervised &&
                 item(
-                    "Restart server",
+                    t("Restart server"),
                     () =>
                         attempt(async () => {
                             await api("restart", {});
                             closeSheet();
-                            notify("info", "Restarting. Running work continues after the restart.");
+                            notify("info", t("Restarting. Running work continues after the restart."));
                         }),
-                    "running work resumes",
+                    t("running work resumes"),
                 )
             }
-            ${item(html`<span class="menu-signout">Sign out</span>`, signOut)}
+            ${item(html`<span class="menu-signout">${t("Sign out")}</span>`, signOut)}
         </div>
         ${
             embedder.items.length > 0 &&
