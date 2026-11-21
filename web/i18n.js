@@ -1,7 +1,7 @@
 // The interface's words in the person's tongue. English is what the code says; the table holds what the interface
 // shows instead. `t` reads the pick at each render, so a switch turns the page at once; a word the table lacks shows
 // as it is. `setPrefs({ uiLang: "zh" })` (theme.js) makes the pick, and it stays with this browser.
-import { prefs } from "./theme.js";
+import { store } from "./store.js";
 
 /** The words, by tongue. `$`s in a line take the rest `t` was given, in order. */
 const WORDS = {
@@ -510,7 +510,7 @@ const CODES = ["en", "zh"];
 
 /** The tongue the interface reads now: what this browser picked, else English. */
 export const uiLanguage = () => {
-    const said = String(prefs()?.uiLang ?? "en")
+    const said = String(store.state.appearance?.uiLang ?? "en")
         .trim()
         .toLowerCase();
 

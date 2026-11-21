@@ -3,7 +3,6 @@
 // to Google's servers to be recognised; Safari on iOS has it too; Firefox has none, and there the mic does not show.
 import { useEffect, useRef, useState } from "preact/hooks";
 import { notify, store } from "./store.js";
-import { prefs, setPrefs } from "./theme.js";
 import { t } from "./i18n.js";
 import { html, Icon, Spinner } from "./ui.js";
 
@@ -639,10 +638,13 @@ const voiceLangNow = () => {
     return VOICE_LANGS.find(([code]) => code === said) ?? VOICE_LANGS[0];
 };
 
-/** The next language for voice messages, and it stays for the recordings to come. */
-const cycleVoiceLanguage = () => {
+/** The next language for voice messages, and it stays for the recordings to come. The theme is imported late:
+ * this file loads in Node for its tests, and the theme touches the document there. */
+const cycleVoiceLanguage = async () => {
     const at = VOICE_LANGS.findIndex(([code]) => code === (voiceLanguage() || "auto"));
     const next = VOICE_LANGS[(at + 1) % VOICE_LANGS.length] ?? VOICE_LANGS[0];
+
+    const { setPrefs } = await import("./theme.js");
 
     setPrefs({ voiceLang: next[0] });
 
@@ -662,7 +664,7 @@ const VOICE_LANGS = [
 
 /** The person's language for voice messages, as the server takes it: none for its own guess. */
 export const voiceLanguage = () => {
-    const said = String(prefs().voiceLang ?? "auto").trim().toLowerCase();
+    const said = String(store.state.appearance?.voiceLang ?? "auto").trim().toLowerCase();
 
     return /^[a-z]{2,3}$/.test(said) ? said : "";
 };
@@ -696,7 +698,7 @@ export function VoiceButton({ voice, class: className = "", size = 17, part, dis
             title=${t("Voice message language: $", t(lang[1]))}
             disabled=${sending}
             onMouseDown=${(event) => event.preventDefault()}
-            onClick=${() => cycleVoiceLanguage()}
+            onClick=${() => void cycleVoiceLanguage()}
         >
             ${lang[2]}
         </button>
