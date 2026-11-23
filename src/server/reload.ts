@@ -82,6 +82,8 @@ const OFF_BY_DEFAULT = new Set([
     "anthropic-subscription.ts",
     "session-tags.ts",
     "ask-someone.ts",
+    // 自更新器假设跟随上游;在 fork 上一键安装会 checkout 上游 tag,把 fork 分支甩掉。升级走 cherry-pick。
+    "updates.ts",
 ]);
 const TITLES: Record<string, string> = {
     "prompt.ts": "System prompt",
